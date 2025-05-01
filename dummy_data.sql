@@ -1,5 +1,5 @@
 /*
-Needs Fixing! 
+Ticket Data (needs fixing) 
 INSERT INTO Tickets (EAN13, category, purchase_date, price, payment_method, isActivated) VALUES ('4689153305038',       'VIP',  '2025-04-28',   '1338.88',  'DC');
 INSERT INTO Tickets (EAN13, category, purchase_date, price, payment_method, isActivated) VALUES ('7486968459915',       'BaS',  '2024-01-22',   '0.0',      'DC');
 INSERT INTO Tickets (EAN13, category, purchase_date, price, payment_method, isActivated) VALUES ('0853363471597',       'GA',   '2024-04-17',   '74.15',    'DC');
