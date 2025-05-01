@@ -43,10 +43,11 @@ create table rating
      event_ID char(5),
      eval_ID int ,
      foreign key(visitor_ID) references Visitor(ID) on delete cascade 
-                                                    on update cascade 
-     #foreign key(event_ID) references Events(ID),
-     foreign key(eval_ID) references Evaluation(ID) on delete cascade 
                                                     on update cascade ,
+     foreign key(event_ID) references Events(ID)    on delete cascade 
+                                                    on update cascade ,
+     foreign key(eval_ID) references Evaluation(ID) on delete cascade 
+                                                    on update cascade 
 );
 
 
