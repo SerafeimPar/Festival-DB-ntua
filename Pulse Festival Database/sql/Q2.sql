@@ -1,10 +1,13 @@
+SET @year = 2024;
+SET @genre = 'Rock';
+
 SELECT 
     a.id, 
     a.name, 
     a.type, 
     g.genre_name, 
     CASE 
-        WHEN e.festival_year = 2024 THEN 'Yes' 
+        WHEN e.festival_year = (@year - 2018) THEN 'Yes' 
         ELSE 'No' 
     END AS participated_in_festival_in_year_specified
 FROM 
@@ -15,7 +18,7 @@ FROM
     LEFT JOIN performance p ON pa.performance_id = p.id 
     LEFT JOIN event e ON p.event_id = e.id 
 WHERE 
-    g.genre_name = 'Rock' 
+    g.genre_name = @genre
 GROUP BY 
     a.id, 
     a.name, 
