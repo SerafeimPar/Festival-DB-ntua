@@ -482,6 +482,9 @@ BEGIN
 END//
 DELIMITER ;
 
+--ADD TRIGGERS FOR STAFF WORKING TWO JOBS AT THE SAME TIME
+--ADD TRIGGERS FOR VENUES BEING USED AT THE SAME TIME
+
 CREATE INDEX idx_visitor_name ON visitor(last_name, first_name);
 CREATE INDEX idx_artistband_name ON artistband(name);
 CREATE INDEX idx_artistband_type ON artistband(type);
