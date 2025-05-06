@@ -14,8 +14,8 @@ mysql -u username -p
 
 -- Μέσα στο περιβάλλον της MariaDB/MySQL
 USE database_name;
-source finalDb.sql;
-source load.sql;
+source install.sql; --Όλο το dir
+source load.sql; --Όλο το dir
 ```
 
 ## Κύριοι Πίνακες
