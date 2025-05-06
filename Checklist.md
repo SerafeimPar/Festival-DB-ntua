@@ -13,3 +13,5 @@
 - [x] Q13 *Returns empty set*
 - [x] Q14 *Returns empty set but it's weird for this one*
 - [x] Q15 *Not sure an rotaei akrivos auto*
+
+Πρέπει να γίνουν και τα Qx_out.txt files όταν δουλέυουν όλα 100%.
