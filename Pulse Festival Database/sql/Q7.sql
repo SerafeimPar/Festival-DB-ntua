@@ -7,7 +7,7 @@ SELECT
         WHEN s.experience_level = 'experienced' THEN 4 
         WHEN s.experience_level = 'expert' THEN 5 
         ELSE 0 
-    END) AS avg_experience_value 
+    END) AS `avg_experience_value/5`
 FROM 
     event e 
 JOIN 
@@ -19,4 +19,4 @@ WHERE
 GROUP BY 
     e.festival_year 
 ORDER BY 
-    avg_experience_value ASC;
+    `avg_experience_value/5` ASC;
