@@ -482,8 +482,134 @@ BEGIN
 END//
 DELIMITER ;
 
---ADD TRIGGERS FOR STAFF WORKING TWO JOBS AT THE SAME TIME
---ADD TRIGGERS FOR VENUES BEING USED AT THE SAME TIME
+DROP PROCEDURE IF EXISTS Q02;
+
+DELIMITER //
+CREATE PROCEDURE Q02 (IN in_genre_name VARCHAR(50), IN in_year int)
+BEGIN
+SELECT 
+    a.id, 
+    a.name, 
+    a.type, 
+    g.genre_name, 
+    CASE 
+        WHEN e.festival_year = (in_year - 2018) THEN 'Yes' 
+        ELSE 'No' 
+    END AS participated_in_festival_in_year_specified
+FROM 
+    artistband a 
+    JOIN artist_band_genre abg ON a.id = abg.artist_band_id 
+    JOIN genre g ON abg.genre_id = g.id 
+    LEFT JOIN performance_artistband pa ON a.id = pa.artist_band_id 
+    LEFT JOIN performance p ON pa.performance_id = p.id 
+    LEFT JOIN event e ON p.event_id = e.id 
+WHERE 
+    g.genre_name = in_genre_name
+GROUP BY 
+    a.id, 
+    a.name, 
+    a.type, 
+    g.genre_name 
+ORDER BY 
+    a.name;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS Q04;
+
+DELIMITER //
+CREATE PROCEDURE Q04 (IN in_artist_alias VARCHAR(100))
+BEGIN
+SELECT 
+    ab.id, 
+    ab.alias,
+    ab.type,
+    AVG(e.artist_performance) AS Artist_Performance, 
+    AVG(e.overall_impression) AS Overall_Impression
+FROM 
+    artistband ab
+JOIN 
+    performance_artistband pa ON ab.id = pa.artist_band_id
+JOIN 
+    performance p ON pa.performance_id = p.id
+JOIN 
+    rates r ON p.id = r.performance_id
+JOIN 
+    evaluation e ON r.evaluation_id = e.id
+WHERE 
+    ab.alias = in_artist_alias
+GROUP BY 
+    ab.id, ab.alias, ab.type;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS Q06;
+DELIMITER //
+CREATE PROCEDURE Q06 (IN in_last_name VARCHAR(50), IN in_first_name VARCHAR(50))
+BEGIN
+SELECT 
+    v.id AS visitor_id,
+    v.first_name,
+    v.last_name,
+    ab.name AS Artist_name,
+    e.name AS Event_name,
+    e.event_date,
+    AVG(eval.overall_impression) AS Overall_impression
+FROM 
+    visitor v
+JOIN 
+    visitor_tickets vt ON v.id = vt.visitor_id
+JOIN 
+    tickets t ON vt.ticket_id = t.EAN13
+JOIN 
+    event e ON t.event_id = e.id
+JOIN 
+    performance p ON e.id = p.event_id
+JOIN 
+    performance_artistband pa ON p.id = pa.performance_id
+JOIN 
+    artistband ab ON pa.artist_band_id = ab.id
+LEFT JOIN 
+    rates r ON v.id = r.visitor_id AND p.id = r.performance_id
+LEFT JOIN 
+    evaluation eval ON r.evaluation_id = eval.id
+WHERE 
+    v.first_name = in_first_name AND v.last_name = in_last_name
+GROUP BY 
+    v.id, v.first_name, v.last_name, ab.name, e.name, e.event_date
+ORDER BY 
+    e.event_date, p.start_time;
+
+END//
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS Q08;
+DELIMITER //
+CREATE PROCEDURE Q08 (IN in_date DATE)
+BEGIN
+SELECT 
+    s.id, 
+    s.name, 
+    s.age, 
+    s.experience_level
+FROM 
+    staff s
+WHERE 
+    s.role = 'support' 
+    AND s.id NOT IN (
+        SELECT 
+            es.staff_id 
+        FROM 
+            event_staff es 
+        WHERE 
+            DATE(es.shift_start) = in_date
+    )
+ORDER BY 
+    s.id;
+
+END//
+DELIMITER ;
 
 CREATE INDEX idx_visitor_name ON visitor(last_name, first_name);
 CREATE INDEX idx_artistband_name ON artistband(name);
