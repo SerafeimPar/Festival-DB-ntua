@@ -141,9 +141,11 @@ CREATE TABLE event (
     start_time TIME NOT NULL CHECK (start_time BETWEEN '00:00:00' AND '23:59:59'),
     end_time TIME NOT NULL CHECK (end_time BETWEEN '00:00:00' AND '23:59:59'),
     duration TIME GENERATED ALWAYS AS (TIMEDIFF(end_time, start_time)) STORED,
+    poster INT UNSIGNED, 
     PRIMARY KEY (id),
     FOREIGN KEY (festival_year) REFERENCES festival(year),
-    CHECK (start_time < end_time)
+    CHECK (start_time < end_time),
+    FOREIGN KEY (poster) REFERENCES images(image_id)
 );
 
 DROP TABLE IF EXISTS venue;
@@ -153,6 +155,8 @@ CREATE TABLE venue (
     description TEXT,
     max_capacity INT UNSIGNED NOT NULL,
     technical_requirements TEXT,
+    photo INT UNSIGNED, 
+    FOREIGN KEY (photo) REFERENCES images(image_id),
     PRIMARY KEY (id)
 );
 
@@ -239,7 +243,8 @@ CREATE TABLE buyer_queue (
     status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'completed', 'cancelled')),
     PRIMARY KEY (buy_id),
     FOREIGN KEY (visitor_id) REFERENCES visitor(id),
-    FOREIGN KEY (event_id) REFERENCES event(id)
+    FOREIGN KEY (event_id) REFERENCES event(id),
+    UNIQUE(visitor_id,event_id)
 );
 
 DROP TABLE IF EXISTS seller_queue;
@@ -251,7 +256,8 @@ CREATE TABLE seller_queue (
     status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'sold', 'cancelled')),
     PRIMARY KEY (sell_id), 
     FOREIGN KEY (visitor_id) REFERENCES visitor(id),
-    FOREIGN KEY (ticket_id) REFERENCES tickets(EAN13)
+    FOREIGN KEY (ticket_id) REFERENCES tickets(EAN13),
+    UNIQUE(visitor_id,ticket_id)
 );
 
 DROP TABLE IF EXISTS resale_transactions;
@@ -374,10 +380,9 @@ BEGIN
     where id = NEW.event_id;
     
     SELECT COUNT(*) INTO existing_tickets
-    FROM tickets
+    FROM tickets JOIN event on (tickets.event_id = event.id)
     WHERE tickets.visitor_id = NEW.visitor_id
-    AND event.event_date = event_date
-    AND tickets.event_id = (SELECT event_id FROM tickets WHERE EAN13 = NEW.ticket_id);
+    AND ticket_date = event.event_date;
     
     IF (existing_tickets > 0) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Visitor already has a ticket for this event on this date';
@@ -577,11 +582,9 @@ SELECT
     e.event_date,
     AVG(eval.overall_impression) AS Overall_impression
 FROM 
-    visitor v
+    tickets t
 JOIN 
-    visitor_tickets vt ON v.id = vt.visitor_id
-JOIN 
-    tickets t ON vt.ticket_id = t.EAN13
+    visitor v ON t.visitor_id = v.id
 JOIN 
     event e ON t.event_id = e.id
 JOIN 
@@ -630,6 +633,68 @@ ORDER BY
     s.id;
 
 END//
+
+CREATE TRIGGER auto_buyer_transaction AFTER INSERT ON buyer_queue
+FOR EACH ROW
+BEGIN
+    DECLARE sell INT;
+    DECLARE seller_id INT;
+    
+    IF (NEW.status = 'pending') THEN
+        SELECT sellQ.sell_id, sellQ.visitor_id INTO sell,seller_id
+        FROM seller_queue as sellQ JOIN tickets on ticket_id = EAN13
+        WHERE sellQ.status = 'pending' AND NEW.event_id = tickets.event_id AND (NEW.ticket_type = 'Any' OR NEW.ticket_type = ticket.category)
+        ORDER BY sellQ.seller_id
+        LIMIT 1;
+
+        IF sell IS NOT NULL THEN
+            UPDATE seller_queue
+            SET status = 'completed'
+            WHERE sell_id = sell;
+            
+            UPDATE buyer_queue 
+            SET status = 'completed'
+            WHERE buy_id = NEW.buy_id;
+
+            INSERT INTO resale_transactions (buyer_id,seller_id,event_id,transaction_date) VALUES (NEW.visitor_id,seller_id,NEW.event_id,NOW()); 
+        END IF;
+    END IF;
+
+
+END//
+
+
+CREATE TRIGGER auto_seller_transaction AFTER INSERT ON seller_queue
+FOR EACH ROW
+BEGIN
+    DECLARE buy INT;
+    DECLARE buyer_id INT;
+    DECLARE event_id INT;
+    
+    IF (NEW.status = 'pending') THEN
+        SELECT buyQ.sell_id,buyQ.visitor_id,buyQ.event_id INTO buy,buyer_id,event_id
+        FROM buyer_queue as buyQ, tickets
+        WHERE  NEW.ticket_id = EAN13 AND buyerQ.status = 'pending' AND tickets.event_id = buyerQ.event_id AND (buyerQ.ticket_type = 'Any' OR ticket.category = buyerQ.ticket_type)
+        ORDER BY sellQ.seller_id
+        LIMIT 1;
+
+        IF buy IS NOT NULL THEN
+            UPDATE buyer_queue
+            SET status = 'completed'
+            WHERE buy_id = buy;
+            
+            UPDATE seller_queue 
+            SET status = 'completed'
+            WHERE sell = NEW.sell_id;
+
+            INSERT INTO resale_transactions (buyer_id,seller_id,event_id,transaction_date) VALUES (buyer_id,NEW.visitor_id,event_id,NOW()); 
+        END IF;
+    END IF;
+
+
+END//
+
+
 DELIMITER ;
 
 CREATE INDEX idx_visitor_name ON visitor(last_name, first_name);
