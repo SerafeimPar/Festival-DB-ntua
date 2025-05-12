@@ -190,7 +190,8 @@ def fake_venue(f):
 def fake_event(f):
 	f.write("INSERT INTO `event` (`id`, `festival_year`, `name`, `event_date`, `start_time`, `end_time`, `duration`, `poster`) VALUES\n")
 	event_val = []
-
+	global event_dates
+	event_dates = {} 
 	img = list(range(61,71))
 	random.shuffle(img)
 	i=0
@@ -208,7 +209,95 @@ def fake_event(f):
 		duration = end_time - start_time
 		img_val = 'NULL' if img==[] else img.pop()
 		event_val.append(f"('{j}', '{festival_year}','{name}', '{event_date}', '{start_time}','{end_time}', '{duration}',{img_val})")
+		event_dates[j] = event_date
 	f.write(",\n".join(event_val) + ";\n\n")
+
+
+def fake_tickets(f):
+	f.write("INSERT INTO Tickets (EAN13, visitor_id, category, purchase_date, price, payment_method, event_id) VALUES\n")
+	tickets_vals = []
+	visitor_ids = random.shuffle(list(range(1,N_VISITORS+1)))
+	visitor_events = {}
+	cnt = 0 
+	for i in range(N_TICKETS):
+		EAN =  "".join([str(random.randint(0,9)) for i in range(13)])
+		event_id = random.randint(1,N_EVENTS)
+		
+		owner = visitor_ids[cnt]
+		cnt += 1
+		if(cnt > N_VISITORS):
+			visitor_ids = random.shuffle(visitor_ids)
+			cnt = 0
+
+		#for each visitor only one ticket per event 
+		while (owner in visitor_events.keys() and visitor_events[owner] == event_id):
+			event_id = random.randint(1,N_EVENTS)
+			
+
+		visitor_events[owner] = event_id
+	
+
+		
+
+		year,month,day = event_dates[event_id][0:2], event_dates[event_id][3:5], event_dates[event_id][6:8]
+		purchase_date = fake.date_between(start_date=date(year - 1, month, day), end_date=date(year,month,day)) #you can buy the ticket one year before the event
+
+		R = random.randint(1,10) 
+		if(R < 5):
+			cat = "GA"
+		elif (R < 8):
+			cat = "VIP"
+		else: 
+			cat = "Bas"
+		cat = random.choice(["GA","VIP","BaS"])
+		
+		if cat == "BaS" : 
+			price = 0.0
+		elif cat == "VIP" :
+			price = random.randint(500,2500) + random.random()
+		else: 
+			price = random.randint(50,500) + random.random()
+
+		price = round(price,2)
+		tickets_vals.append(f"('{EAN}','{owner}','{cat}','{purchase_date}',{price},'{random.choice(["CC","BC","DC","NC"])}',{event_id})")
+	f.write(",\n".join(tickets_vals) + ";\n\n")
+
+
+def fake_evaluations(f):
+	eval_vals = []
+	f.write("INSERT INTO evaluation  (artist_performance , sound_lighting, stage_presence, organization, overall_impression) VALUES\n")
+	for i in range(N_EVALUATIONS):
+		artist_performance = random.randint(1,5)
+		sound_lighting = random.randint(1,5)
+		stage_presence = random.randint(1,5)
+		organization = random.randint(1,5)
+		overall_impression = random.randint(1,5)
+		eval_vals.append(f"('{artist_performance}', '{sound_lighting}','{stage_presence}', {organization}, {overall_impression}),\n")
+	f.write(",\n".join(eval_vals) + ";\n\n")
+
+
+def fake_rates(f): 
+	rates_evals = []
+	f.write("INSERT INTO rates  (visitor_id ,performance_id, evaluation_id, rating_date) VALUES\n")
+	for eval in range(1,N_EVALUATIONS+1):
+		#you have one month to evaluate
+		visitor_id = random.randint(1,N_VISITORS)
+		
+		eval_date = fake.date_between(start_date= date()  , end_date = date() )
+
+
+	
+
+# def fake_fest_photo(f):
+# 	f.write("INSERT INTO `festivalPhotos` (`festival_year`, `photo`) VALUES\n")
+# 	fest_photo_val = []
+# 	img = list(range(11,21))
+# 	random.shuffle(img)
+# 	for i in range(1,N_LOCATIONS+1):
+# 		photo = 'NULL' if img==[] else img.pop()
+# 		loc_photo_val.append(f"({i},{photo})")
+# 	f.write(",\n".join(loc_photo_val) + ";\n\n")
+
 
 with open("festival_fake_data.sql", "w") as f:
 	f.write("BEGIN;\n\n")
@@ -221,6 +310,9 @@ with open("festival_fake_data.sql", "w") as f:
 	fake_art_genre(f)
 	fake_member_of(f)
 	fake_festival(f)
-	fake_event(f)
 	fake_venue(f)
+	fake_event(f)
+	fake_tickets(f)
+	fake_evaluations(f)
+	fake_rates(f)
 	f.write("COMMIT;\n")
