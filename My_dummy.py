@@ -1,6 +1,6 @@
 import random
 import faker
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 from lorem_text import lorem
 fake = faker.Faker()
 
@@ -42,7 +42,7 @@ def fake_locations(f):
 		city = fake.city()
 		country = fake.country()
 		continent = random.choice(["North America", "South America", "Europe", "Asia", "Africa", "Oceania", "Antarctica"])
-		loc_values.append(f"({i}, '{address}', '{geo}', '{city}', '{country}', '{continent}')")
+		loc_values.append(f'({i}, "{address}", "{geo}", "{city}", "{country}", "{continent}")')
 	f.write(",\n".join(loc_values) + ";\n\n")
 
 def fake_images(f):
@@ -50,7 +50,7 @@ def fake_images(f):
 	img_values = []
 	for i in range(1,N_IMAGES+1):
 		description = lorem.sentence()
-		image_file = f"{fake.dga()}/"
+		image_file = f"{fake.image_url()}/"
 		img_values.append(f"({i}, '{description}', '{image_file}')")
 	f.write(",\n".join(img_values) + ";\n\n")
 
@@ -80,7 +80,7 @@ def fake_artistband(f):
 		birth_or_formation = get_random_date(1970, 2020)
 		artistband.append([i,ab_type,birth_or_formation])
 		website = fake.url()
-		instagram = f"https://www.instagram.com/{fake.user_name()}/"
+		instagram = f"https://www.instagram.com/{fake.dga()}/"
 		img_val = 'NULL' if img==[] else img.pop()
 		artist_values.append(f"({i}, '{ab_type}', '{name}', '{alias}', '{birth_or_formation}', '{website}', '{instagram}',{img_val} )")
 	f.write(",\n".join(artist_values) + ";\n\n")
@@ -155,7 +155,7 @@ def fake_festival(f):
 		end_date = start_date + timedelta(days=random.randint(1,7))
 		location_id = locations.pop()
 		img_val = 'NULL' if img==[] else img.pop()
-		festival_dates,append([start_date, end_date])
+		festival_dates.append([start_date, end_date])
 		fest_val.append(f"('{year}', '{start_date}','{end_date}', {location_id}, {img_val})")
 	f.write(",\n".join(fest_val) + ";\n\n")
 
@@ -169,20 +169,46 @@ def fake_festival(f):
 # 		loc_photo_val.append(f"({i},{photo})")
 # 	f.write(",\n".join(loc_photo_val) + ";\n\n")
 
+def fake_venue(f):
+	f.write("INSERT INTO `venue` (`id`, `name`, `description`, `max_capacity`, `technical_requirements`, `photo`) VALUES\n")
+	global venue_id
+	venue_id = []
+	venue_val = []
+	tech_list = ["Speakers", "Stage Lights", "Microphones", "Sound Systems", "Special Effects"]
+	img = list(range(41,61))
+	random.shuffle(img)
+	for id in range(1,N_VENUES+1):
+		name = fake.street_name()
+		description = lorem.sentence()
+		max_capacity = random.randint(100,350)
+		tech_req = random.choices(tech_list,weights=[10,5,10,5,3],k=random.randint(1,5))
+		tech_req = ','.join(map(str,tech_req))
+		img_val = 'NULL' if img==[] else img.pop()
+		venue_val.append(f"({id}, '{name}','{description}', {max_capacity}, '{tech_req}', {img_val})")
+	f.write(",\n".join(venue_val) + ";\n\n")
+
 def fake_event(f):
 	f.write("INSERT INTO `event` (`id`, `festival_year`, `name`, `event_date`, `start_time`, `end_time`, `duration`, `poster`) VALUES\n")
 	event_val = []
 
-	img = list(range(41,61))
+	img = list(range(61,71))
 	random.shuffle(img)
-	for id in range(1,N_EVENTS+1):
-		festival_year = id if id*3
-		start_date = get_random_date(year,year)
-		end_date = start_date + timedelta(days=random.randint(1,7))
-		location_id = locations.pop()
+	i=0
+	for j in range(1,N_EVENTS+1):
+		print(4*(i+1) > j)
+		if (4*(i+1)>j):
+			festival_year = festival_dates[i][0].year
+		else:
+			festival_year = festival_dates[i][0].year
+			i +=1
+		name = fake.user_name()
+		event_date = festival_dates[i][0]
+		start_time = datetime.combine(event_date,datetime.strptime(fake.time(), '%H:%M:%S').time())
+		end_time = start_time + timedelta(hours=random.choice([3,6,9,12]))
+		duration = end_time - start_time
 		img_val = 'NULL' if img==[] else img.pop()
-		fest_val.append(f"('{year}', '{start_date}','{end_date}', {location_id}, {img_val})")
-	f.write(",\n".join(fest_val) + ";\n\n")
+		event_val.append(f"('{j}', '{festival_year}','{name}', '{event_date}', '{start_time}','{end_time}', '{duration}',{img_val})")
+	f.write(",\n".join(event_val) + ";\n\n")
 
 with open("festival_fake_data.sql", "w") as f:
 	f.write("BEGIN;\n\n")
@@ -195,4 +221,6 @@ with open("festival_fake_data.sql", "w") as f:
 	fake_art_genre(f)
 	fake_member_of(f)
 	fake_festival(f)
+	fake_event(f)
+	fake_venue(f)
 	f.write("COMMIT;\n")
