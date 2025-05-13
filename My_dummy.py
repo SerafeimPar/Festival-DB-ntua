@@ -420,13 +420,23 @@ def fake_event_staff(f):
 		#Creation for specific ID
 		staff_id = random.randint(1,N_STAFF)
 		year, month, day = event['event_date'].year, event['event_date'].month, event['event_date'].day
-		assignment_date = fake.date_between(date(year - 1, month, day), event['event_date'])
+		assignment_date = fake.date_between_dates(date(year-1,1,1), event['event_date'])
 		#Need to combine these with time
 		shift_start = fake.date_between(event['start_time'], event['end_time'])
 		shift_end = fake.date_between(shift_start, event['end_time'])
 		event_staff_vals.append(f"({event['id']}, {staff_id}, {assignment_date}, {shift_start}, {shift_end})")
 	f.write(",\n".join(event_staff_vals) + ";\n\n")
 
+
+def fake_fest_photo(f):
+	f.write("INSERT INTO `festivalPhotos` (`festival_year`, `photo`) VALUES\n")
+	fest_photo_val = []
+	img = list(range(71,81))
+	random.shuffle(img)
+	for i in range(1,N_FESTIVALS+1):
+		photo = 'NULL' if img==[] else img.pop()
+		fest_photo_val.append(f"({i},{photo})")
+	f.write(",\n".join(fest_photo_val) + ";\n\n")
 
 with open("festival_fake_data.sql", "w") as f:
 	f.write("BEGIN;\n\n")
@@ -452,4 +462,5 @@ with open("festival_fake_data.sql", "w") as f:
 	fake_evaluations(f)
 	fake_staff(f)
 	fake_event_staff(f)
+	fake_fest_photo(f)
 	f.write("COMMIT;\n")
