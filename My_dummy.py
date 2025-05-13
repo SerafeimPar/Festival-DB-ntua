@@ -376,9 +376,9 @@ def fake_tickets(f):
             evaluated_tickets += 1
 
         R = random.randint(1, 100)
-        if R < 70:
+        if R < 89:
             cat = "GA"
-        elif R < 98:
+        elif R < 99:
             cat = "BaS"
         else:
             cat = "VIP"
