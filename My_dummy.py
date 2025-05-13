@@ -433,9 +433,9 @@ def fake_fest_photo(f):
 	fest_photo_val = []
 	img = list(range(71,81))
 	random.shuffle(img)
-	for i in range(1,N_FESTIVALS+1):
+	for i in festival_dates:
 		photo = 'NULL' if img==[] else img.pop()
-		fest_photo_val.append(f"({i},{photo})")
+		fest_photo_val.append(f"({i[0].year},{photo})")
 	f.write(",\n".join(fest_photo_val) + ";\n\n")
 
 with open("festival_fake_data.sql", "w") as f:
