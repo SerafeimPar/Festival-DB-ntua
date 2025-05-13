@@ -378,7 +378,7 @@ def fake_tickets(f):
         start_date = date(event_date.year - 1, event_date.month, event_date.day)
         purchase_date = fake.date_between(start_date=start_date, end_date=event_date)
 
-        if evaluated_tickets <= N_EVALUATIONS:
+        if evaluated_tickets < N_EVALUATIONS:
             tickets_for_evaluation.append((owner, event_id))
             evaluated_tickets += 1
             activated = True
@@ -464,21 +464,34 @@ def fake_fest_photo(f):
 
 
 
+def fake_evaluations(f):
+	eval_vals = []
+	f.write("INSERT INTO evaluation  (artist_performance , sound_lighting, stage_presence, organization, overall_impression) VALUES\n")
+	for i in range(N_EVALUATIONS):
+		artist_performance = random.randint(1,5)
+		sound_lighting = random.randint(1,5)
+		stage_presence = random.randint(1,5)
+		organization = random.randint(1,5)
+		overall_impression = random.randint(1,5)
+		eval_vals.append(f"({artist_performance},{sound_lighting},{stage_presence},{organization},{overall_impression})")
+	f.write(",\n".join(eval_vals) + ";\n\n")
+
+
 def fake_rates(f):
     f.write("INSERT INTO rates (visitor_id, performance_id, evaluation_id, rating_date) VALUES\n")
     rate_vals = []
-    cnt = 1
-    for t in tickets_for_evaluation: 
+
+    for i,t in enumerate(tickets_for_evaluation): 
         owner, event_id = t
         performance = random.choice([p['id'] for p in performance_object if p['event_id'] == event_id])
         event_date = event_dates[event_id]
         start_date = date(event_date.year, event_date.month, event_date.day) 
         rate_date = fake.date_between(start_date=start_date, end_date=date(event_date.year + 1 , 12, 31))
         
-        rate_vals.append(f"({owner}, {performance}, {cnt}, '{rate_date}')")
-        cnt += 1   
+        rate_vals.append(f"({owner}, {performance}, {i+1}, '{rate_date}')")
 
-    f.write(f",;".join(rate_vals) + "\n\n")
+
+    f.write(f",\n".join(rate_vals) + ";\n\n")
 
 
 with open("festival_fake_data.sql", "w") as f:
