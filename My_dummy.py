@@ -465,9 +465,9 @@ def fake_rates(f):
         
         event_date = event_dates[event_id]
         
-        start_date = date(event_date.year + 1, event_date.month, event_date.day) 
+        start_date = date(event_date.year, event_date.month, event_date.day) 
         
-        rate_date = fake.date_between(start_date=start_date, end_date=event_date)
+        rate_date = fake.date_between(start_date=start_date, end_date=date(event_date.year + 1 , 12, 31))
         rate_vals.append(f"('{owner}', '{event_id}', '{performance}', '{cnt}', '{rate_date}')")
 
     f.write(f",\n".join(rate_vals) + ";\n\n")
