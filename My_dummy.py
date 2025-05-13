@@ -423,10 +423,8 @@ def fake_staff(f):
 def fake_event_staff(f):
 	f.write("INSERT INTO `event_staff` (`event_id`, `staff_id`, `assignment_date`, `shift_start`, `shift_end`) VALUES\n")
 	event_staff_vals = []
-	#Add event_staff logic
 	for event in event_objects:
 		used_staff = []
-		#Calculate staff required for the event and then loop the below creation for as many IDs needed
 		max_cap = venue_objects[event_venue_dict[event['id']] - 1]['max_capacity']
 		cnt = 0
 		while cnt <= 0.03*max_cap:
