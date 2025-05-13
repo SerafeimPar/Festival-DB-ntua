@@ -1,4 +1,4 @@
-SET @visitor_id = 43; --43 and 33 are good examples
+SET @visitor_id = 12; --43 and 33 are good examples
 
 SELECT 
     v.id AS visitor_id,
@@ -13,9 +13,7 @@ SELECT
 FROM 
     visitor v
 JOIN 
-    visitor_tickets vt ON v.id = vt.visitor_id
-JOIN 
-    tickets t ON vt.ticket_id = t.EAN13
+    tickets t ON v.id = t.visitor_id
 JOIN 
     event e ON t.event_id = e.id
 JOIN 
