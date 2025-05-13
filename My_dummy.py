@@ -397,7 +397,7 @@ def fake_evaluations(f):
 		stage_presence = random.randint(1,5)
 		organization = random.randint(1,5)
 		overall_impression = random.randint(1,5)
-		eval_vals.append(f"('{artist_performance}','{sound_lighting}','{stage_presence}',{organization},{overall_impression})")
+		eval_vals.append(f"({artist_performance},{sound_lighting},{stage_presence},{organization},{overall_impression})")
 	f.write(",\n".join(eval_vals) + ";\n\n")
 
 
@@ -410,6 +410,23 @@ def fake_staff(f):
         staff_vals.append(f"({i}, '{fake.first_name() + " " + fake.last_name()}', {random.randint(18,45)}, '{random.choice(roles)}', '{random.choice(experiences)}')")
     f.write(",\n".join(staff_vals) + ";\n\n")
 
+def fake_event_staff(f):
+	f.write("INSERT INTO `event_staff` (`event_id`, `staff_id`, `assignment_date`, `shift_start`, `shift_end`) VALUES\n")
+	event_staff_vals = []
+	#Add event_staff logic
+	for event in event_objects:
+		#Calculate staff required for the event and then loop the below creation for as many IDs needed
+
+
+		#Creation for specific ID
+		staff_id = random.randint(1,N_STAFF)
+		year, month, day = event['event_date'].year, event['event_date'].month, event['event_date'].day
+		assignment_date = fake.date_between(date(year - 1, month, day), event['event_date'])
+		#Need to combine these with time
+		shift_start = fake.date_between(event['start_time'], event['end_time'])
+		shift_end = fake.date_between(shift_start, event['end_time'])
+		event_staff_vals.append(f"({event['id']}, {staff_id}, {assignment_date}, {shift_start}, {shift_end})")
+	f.write(",\n".join(event_staff_vals) + ";\n\n")
 
 
 with open("festival_fake_data.sql", "w") as f:
@@ -431,7 +448,9 @@ with open("festival_fake_data.sql", "w") as f:
 	fake_event_venue(f)
 	fake_performance(f)
 	fake_performance_artistband(f)
-	fake_tickets(f)
+	#Tickets doesn't follow the triggers. Please fix
+	#fake_tickets(f)
 	fake_evaluations(f)
 	fake_staff(f)
+	fake_event_staff(f)
 	f.write("COMMIT;\n")
