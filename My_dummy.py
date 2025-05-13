@@ -344,47 +344,56 @@ def fake_performance_artistband(f):
 def fake_tickets(f):
     f.write("INSERT INTO Tickets (EAN13, visitor_id, category, purchase_date, price, payment_method, event_id) VALUES\n")
     tickets_vals = []
-    visitor_ids = list(range(1, N_VISITORS+1))
+    visitor_ids = list(range(1, N_VISITORS + 1))
     random.shuffle(visitor_ids)
     visitor_events = {}
-    cnt = 0 
+    cnt = 0
+
+    global tickets_for_evaluation 
+    tickets_for_evaluation = []  # keep this for rates
+    evaluated_tickets = 0
+
     for i in range(N_TICKETS):
-        EAN = "".join([str(random.randint(0,9)) for i in range(13)])
+        EAN = "".join([str(random.randint(0, 9)) for i in range(13)])
         event_id = random.randint(1, N_EVENTS)
-        
+
         owner = visitor_ids[cnt]
         cnt += 1
         if cnt >= N_VISITORS:
             random.shuffle(visitor_ids)
             cnt = 0
-        
-        # For each visitor only one ticket per event 
-        while (owner in visitor_events and visitor_events[owner] == event_id):
+
+        while owner in visitor_events and visitor_events[owner] == event_id:
             event_id = random.randint(1, N_EVENTS)
-            
+
         visitor_events[owner] = event_id
-        
-        # Get the event date properly from a datetime.date object
         event_date = event_dates[event_id]
-        year, month, day = event_date.year, event_date.month, event_date.day
-        
-        # Create a date object for one year before
-        start_date = date(year - 1, month, day)
+        start_date = date(event_date.year - 1, event_date.month, event_date.day)
         purchase_date = fake.date_between(start_date=start_date, end_date=event_date)
-        
-        cat = random.choice(["GA", "VIP", "BaS"])
-        
-        if cat == "BaS": 
+
+        if evaluated_tickets < N_EVALUATIONS:
+            tickets_for_evaluation.append((owner, event_id))
+            evaluated_tickets += 1
+
+        R = random.randint(1, 100)
+        if R < 70:
+            cat = "GA"
+        elif R < 98:
+            cat = "BaS"
+        else:
+            cat = "VIP"
+
+        if cat == "BaS":
             price = 0.0
         elif cat == "VIP":
             price = random.randint(500, 2500) + random.random()
-        else: 
+        else:
             price = random.randint(50, 500) + random.random()
-        
+
         price = round(price, 2)
         tickets_vals.append(f"('{EAN}','{owner}','{cat}','{purchase_date}',{price},'{random.choice(['CC','BC','DC','NC'])}',{event_id})")
-    
-    f.write(",\n".join(tickets_vals) + ";\n\n")
+
+    f.write(f",\n".join(tickets_vals) + ";\n\n")
 
 
 def fake_evaluations(f):
@@ -437,6 +446,15 @@ def fake_fest_photo(f):
 		photo = 'NULL' if img==[] else img.pop()
 		fest_photo_val.append(f"({i[0].year},{photo})")
 	f.write(",\n".join(fest_photo_val) + ";\n\n")
+
+
+def activate_tickets(N):
+	f.write("""UPDATE ticket 
+            SET isActivated = true 
+            LIMIT {N} ;""")
+
+
+
 
 with open("festival_fake_data.sql", "w") as f:
 	f.write("BEGIN;\n\n")
