@@ -171,8 +171,8 @@ def fake_festival(f):
 
 def fake_venue(f):
 	f.write("INSERT INTO `venue` (`id`, `name`, `description`, `max_capacity`, `technical_requirements`, `photo`) VALUES\n")
-	global venue_id
-	venue_id = []
+	global venue_objects
+	venue_objects = []
 	venue_val = []
 	tech_list = ["Speakers", "Stage Lights", "Microphones", "Sound Systems", "Special Effects"]
 	img = list(range(41,61))
@@ -184,6 +184,7 @@ def fake_venue(f):
 		tech_req = random.choices(tech_list,weights=[10,5,10,5,3],k=random.randint(1,5))
 		tech_req = ','.join(map(str,tech_req))
 		img_val = 'NULL' if img==[] else img.pop()
+		venue_objects.append({'id':id, 'name':name, 'description':description, 'max_capacity':max_capacity, 'tech_req':tech_req, 'img_val':img_val})
 		venue_val.append(f"({id}, '{name}','{description}', {max_capacity}, '{tech_req}', {img_val})")
 	f.write(",\n".join(venue_val) + ";\n\n")
 
@@ -315,7 +316,7 @@ def fake_performance_artistband(f):
                     else:
                         consecutive_count = 1
                 
-                if max_consecutive >= 3:
+                if max_consecutive >= 2:
                     has_conflict = True
             
             # If no conflict, break the loop
