@@ -343,7 +343,7 @@ def fake_performance_artistband(f):
 
 
 def fake_tickets(f):
-    f.write("INSERT INTO tickets (EAN13, visitor_id, category, purchase_date, price, payment_method, event_id) VALUES\n")
+    f.write("INSERT INTO tickets (EAN13, visitor_id, category, purchase_date, price, payment_method, event_id, isActivated) VALUES\n")
     tickets_vals = []
     visitor_ids = list(range(1, N_VISITORS + 1))
     random.shuffle(visitor_ids)
@@ -355,6 +355,7 @@ def fake_tickets(f):
     evaluated_tickets = 0
 
     for i in range(N_TICKETS):
+        activated = False
         EAN = "".join([str(random.randint(0, 9)) for i in range(13)])
         event_id = random.randint(1, N_EVENTS)
 
@@ -380,6 +381,8 @@ def fake_tickets(f):
         if evaluated_tickets < N_EVALUATIONS:
             tickets_for_evaluation.append((owner, event_id))
             evaluated_tickets += 1
+            activated = True
+
 
         R = random.randint(1, 100)
         if R < 70:
@@ -397,23 +400,9 @@ def fake_tickets(f):
             price = random.randint(50, 500) + random.random()
 
         price = round(price, 2)
-        tickets_vals.append(f"('{EAN}','{owner}','{cat}','{purchase_date}',{price},'{random.choice(['CC','BC','DC','NC'])}',{event_id})")
+        tickets_vals.append(f"('{EAN}','{owner}','{cat}','{purchase_date}',{price},'{random.choice(['CC','BC','DC','NC'])}',{event_id},{activated})")
 
     f.write(f",\n".join(tickets_vals) + ";\n\n")
-
-
-def fake_evaluations(f):
-	eval_vals = []
-	f.write("INSERT INTO evaluation  (artist_performance , sound_lighting, stage_presence, organization, overall_impression) VALUES\n")
-	for i in range(N_EVALUATIONS):
-		artist_performance = random.randint(1,5)
-		sound_lighting = random.randint(1,5)
-		stage_presence = random.randint(1,5)
-		organization = random.randint(1,5)
-		overall_impression = random.randint(1,5)
-		eval_vals.append(f"({artist_performance},{sound_lighting},{stage_presence},{organization},{overall_impression})")
-	f.write(",\n".join(eval_vals) + ";\n\n")
-
 
 def fake_staff(f):
     f.write("INSERT INTO `staff` (`id`, `name`, `age`, `role`, `experience_level`) VALUES\n")
@@ -454,12 +443,10 @@ def fake_fest_photo(f):
 	f.write(",\n".join(fest_photo_val) + ";\n\n")
 
 
-def activate_tickets(N):
-	f.write(f"UPDATE tickets SET isActivated = true LIMIT {N};\n")
+
 
 def fake_rates(f):
-    activate_tickets(N_EVALUATIONS)
-    f.write("INSERT INTO rates (visitor_id, performance_id, evaluation_id, rating_date) VALUES\n")
+    start = "INSERT INTO rates (visitor_id, performance_id, evaluation_id, rating_date) VALUES\n"
     rate_vals = []
     cnt = 1
     for t in tickets_for_evaluation: 
@@ -469,10 +456,10 @@ def fake_rates(f):
         start_date = date(event_date.year, event_date.month, event_date.day) 
         rate_date = fake.date_between(start_date=start_date, end_date=date(event_date.year + 1 , 12, 31))
         
-        rate_vals.append(f"({owner}, {performance}, {cnt}, {rate_date})")
+        rate_vals.append(f"{start}({owner}, {performance}, {cnt}, '{rate_date}')")
         cnt += 1   
 
-    f.write(f",\n".join(rate_vals) + ";\n\n")
+    f.write(f";".join(rate_vals) + "\n\n")
 
 
 with open("festival_fake_data.sql", "w") as f:
