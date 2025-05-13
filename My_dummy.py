@@ -378,7 +378,7 @@ def fake_tickets(f):
         start_date = date(event_date.year - 1, event_date.month, event_date.day)
         purchase_date = fake.date_between(start_date=start_date, end_date=event_date)
 
-        if evaluated_tickets < N_EVALUATIONS:
+        if evaluated_tickets <= N_EVALUATIONS:
             tickets_for_evaluation.append((owner, event_id))
             evaluated_tickets += 1
             activated = True
@@ -446,7 +446,7 @@ def fake_fest_photo(f):
 
 
 def fake_rates(f):
-    start = "INSERT INTO rates (visitor_id, performance_id, evaluation_id, rating_date) VALUES\n"
+    f.write("INSERT INTO rates (visitor_id, performance_id, evaluation_id, rating_date) VALUES\n")
     rate_vals = []
     cnt = 1
     for t in tickets_for_evaluation: 
@@ -456,10 +456,10 @@ def fake_rates(f):
         start_date = date(event_date.year, event_date.month, event_date.day) 
         rate_date = fake.date_between(start_date=start_date, end_date=date(event_date.year + 1 , 12, 31))
         
-        rate_vals.append(f"{start}({owner}, {performance}, {cnt}, '{rate_date}')")
+        rate_vals.append(f"({owner}, {performance}, {cnt}, '{rate_date}')")
         cnt += 1   
 
-    f.write(f";".join(rate_vals) + "\n\n")
+    f.write(f",;".join(rate_vals) + "\n\n")
 
 
 with open("festival_fake_data.sql", "w") as f:
