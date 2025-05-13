@@ -659,6 +659,10 @@ BEGIN
             SET status = 'completed'
             WHERE buy_id = NEW.buy_id;
 
+            UPDATE ticket
+            SET visitor_id = NEW.visitor_id
+            WHERE EAN13 = EAN;
+
             INSERT INTO resale_transactions (buyer_id,seller_id,event_id,transaction_date) VALUES (NEW.visitor_id,seller_id,NEW.event_id,NOW()); 
         END IF;
     END IF;
@@ -689,6 +693,10 @@ BEGIN
             UPDATE seller_queue 
             SET status = 'completed'
             WHERE sell = NEW.sell_id;
+
+            UPDATE ticket
+            SET visitor_id = buyer_id
+            WHERE EAN13 = NEW.ticket_id;
 
             INSERT INTO resale_transactions (buyer_id,seller_id,event_id,transaction_date) VALUES (buyer_id,NEW.visitor_id,event_id,NOW()); 
         END IF;
