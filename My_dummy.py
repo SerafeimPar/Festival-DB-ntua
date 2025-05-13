@@ -451,7 +451,7 @@ def fake_fest_photo(f):
 def activate_tickets(N):
 	f.write(f"""UPDATE tickets 
             SET isActivated = true 
-            LIMIT {N} ;""")
+            LIMIT {N};\n""")
 
 def fake_rates(f):
     activate_tickets(N_EVALUATIONS)
@@ -461,14 +461,13 @@ def fake_rates(f):
     for t in tickets_for_evaluation: 
         owner, event_id = t
         performance = random.choice([p['id'] for p in performance_object if p['event_id'] == event_id])
-        cnt += 1 
         
         event_date = event_dates[event_id]
-        
         start_date = date(event_date.year, event_date.month, event_date.day) 
-        
         rate_date = fake.date_between(start_date=start_date, end_date=date(event_date.year + 1 , 12, 31))
-        rate_vals.append(f"('{owner}', '{event_id}', '{performance}', '{cnt}', '{rate_date}')")
+        
+        rate_vals.append(f"('{owner}', '{performance}', '{cnt}', '{rate_date}')")
+        cnt += 1   
 
     f.write(f",\n".join(rate_vals) + ";\n\n")
 
