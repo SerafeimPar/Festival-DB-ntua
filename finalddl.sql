@@ -175,7 +175,7 @@ CREATE TABLE performance (
     event_id INT UNSIGNED NOT NULL,
     venue_id INT UNSIGNED NOT NULL,
     performance_type VARCHAR(50) NOT NULL CHECK (performance_type IN ('warm up', 'headline', 'Special guest', 'other')),
-    start_time TIME NOT NULL CHECK (start_time BETWEEN '00:00:00' AND '23:59:59'),
+    start_time DATETIME NOT NULL,
     duration TIME NOT NULL CHECK (duration <= '03:00:00'),
     sequence_number INT UNSIGNED NOT NULL,
     break_duration TIME NOT NULL CHECK (break_duration BETWEEN '00:05:00' AND '00:30:00'),
