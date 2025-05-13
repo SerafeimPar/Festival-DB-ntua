@@ -459,51 +459,54 @@ BEGIN
 END//
 
 
-
-CREATE TRIGGER check_staff_requirements BEFORE INSERT ON event_staff
+CREATE TRIGGER check_staff_requirements_before_ticket BEFORE INSERT ON tickets
 FOR EACH ROW
 BEGIN
     DECLARE venue_capacity INT;
     DECLARE security_count INT;
     DECLARE support_count INT;
-    DECLARE staff_role VARCHAR(50);
+    DECLARE event_date DATE;
     
-    SELECT role INTO staff_role FROM staff WHERE id = NEW.staff_id;
+    -- Get the event date
+    SELECT e.event_date INTO event_date
+    FROM event e
+    WHERE e.id = NEW.event_id;
     
-    IF (staff_role = 'security' OR staff_role = 'support') THEN
-        SELECT venue.max_capacity INTO venue_capacity
-        FROM event
-        JOIN event_venue ON event.id = event_venue.event_id
-        JOIN venue ON event_venue.venue_id = venue.id
-        WHERE event.id = NEW.event_id;
-        
-        SELECT COUNT(*) INTO security_count
-        FROM event_staff
-        JOIN staff ON event_staff.staff_id = staff.id
-        WHERE event_staff.event_id = NEW.event_id
-        AND staff.role = 'security'
-        AND event_staff.assignment_date = NEW.assignment_date;
-        
-        SELECT COUNT(*) INTO support_count
-        FROM event_staff
-        JOIN staff ON event_staff.staff_id = staff.id
-        WHERE event_staff.event_id = NEW.event_id
-        AND staff.role = 'support'
-        AND event_staff.assignment_date = NEW.assignment_date;
-        
-        IF (staff_role = 'security') THEN
-            SET security_count = security_count + 1;
-        ELSEIF (staff_role = 'support') THEN
-            SET support_count = support_count + 1;
-        END IF;
-        
-        IF ((security_count / venue_capacity) < 0.05) THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Security staff must be at least 5% of venue capacity';
-        END IF;
-        
-        IF ((support_count / venue_capacity) < 0.02) THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Support staff must be at least 2% of venue capacity';
-        END IF;
+    -- Get venue capacity
+    SELECT venue.max_capacity INTO venue_capacity
+    FROM event
+    JOIN event_venue ON event.id = event_venue.event_id
+    JOIN venue ON event_venue.venue_id = venue.id
+    WHERE event.id = NEW.event_id;
+    
+    -- Count security staff for this event and date
+    SELECT COUNT(DISTINCT staff_id) INTO security_count
+    FROM event_staff
+    JOIN staff ON event_staff.staff_id = staff.id
+    WHERE event_staff.event_id = NEW.event_id
+    AND staff.role = 'security';
+    
+    -- Count support staff for this event and date
+    SELECT COUNT(DISTINCT staff_id) INTO support_count
+    FROM event_staff
+    JOIN staff ON event_staff.staff_id = staff.id
+    WHERE event_staff.event_id = NEW.event_id
+    AND staff.role = 'support';
+    
+    -- Debug output
+    SET @debug_msg = CONCAT('Venue capacity: ', venue_capacity, 
+                           ', Security count: ', security_count, 
+                           ', Support count: ', support_count,
+                           ', Security ratio: ', CAST((security_count * 100 / venue_capacity) AS DECIMAL(10,2)), '%',
+                           ', Support ratio: ', CAST((support_count * 100 / venue_capacity) AS DECIMAL(10,2)), '%');
+    
+    -- Use float division and convert to decimal to avoid integer division
+    IF ((security_count * 100 / venue_capacity) < 5) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot sell tickets: Security staff must be at least 5% of venue capacity';
+    END IF;
+    
+    IF ((support_count * 100 / venue_capacity) < 2) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot sell tickets: Support staff must be at least 2% of venue capacity';
     END IF;
 END//
 

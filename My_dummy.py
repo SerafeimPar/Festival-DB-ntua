@@ -2,6 +2,7 @@ import random
 import faker
 from datetime import timedelta, date, datetime, timedelta
 from lorem_text import lorem
+import math
 fake = faker.Faker()
 
 N_VISITORS = 600
@@ -199,21 +200,23 @@ def fake_event(f):
 	img = list(range(61,71))
 	random.shuffle(img)
 	i=0
-	for j in range(1,N_EVENTS+1):
-		if (4*(i+1)>j):
-			festival_year = festival_dates[i][0].year
-		else:
-			festival_year = festival_dates[i][0].year
-			i +=1
-		name = fake.user_name()
+	for j in range(1, N_EVENTS + 1):
+		# Determine the festival year based on the event date
 		event_date = festival_dates[i][0]
-		start_time = datetime.combine(event_date,datetime.strptime(fake.time(), '%H:%M:%S').time())
-		end_time = start_time + timedelta(hours=random.choice([3,6,9,12]))
+		festival_year = event_date.year
+
+		# Ensure we increment i only when we reach the next festival
+		if j % 4 == 0:  # Every fourth event
+			i += 1
+
+		name = fake.user_name()
+		start_time = datetime.combine(event_date, datetime.strptime(fake.time(), '%H:%M:%S').time())
+		end_time = start_time + timedelta(hours=random.choice([3, 6, 9, 12]))
 		duration = end_time - start_time
-		img_val = 'NULL' if img==[] else img.pop()
+		img_val = 'NULL' if img == [] else img.pop()
 		event_dates[j] = event_date
 		event_objects.append({'id': j, 'festival_year': festival_year, 'name': name, 'event_date': event_date, 'start_time': start_time, 'end_time': end_time, 'duration': duration, 'img_val': img_val})
-		event_val.append(f"({j}, '{festival_year}','{name}', '{event_date}', '{start_time}','{end_time}', {img_val})")
+		event_val.append(f"({j}, '{festival_year}', '{name}', '{event_date}', '{start_time}', '{end_time}', {img_val})")
 	f.write(",\n".join(event_val) + ";\n\n")
 
 
@@ -365,7 +368,6 @@ def fake_tickets(f):
             random.shuffle(visitor_ids)
             cnt = 0
 
-
         while (owner in visitor_events) and (event_dates[visitor_events[owner]] == event_dates[event_id]):
             # Find a new event with a different date
             prev_date = event_dates[event_id]
@@ -383,7 +385,6 @@ def fake_tickets(f):
             evaluated_tickets += 1
             activated = True
 
-
         R = random.randint(1, 100)
         if R < 89:
             cat = "GA"
@@ -400,9 +401,12 @@ def fake_tickets(f):
             price = random.randint(50, 500) + random.random()
 
         price = round(price, 2)
-        tickets_vals.append(f"('{EAN}','{owner}','{cat}','{purchase_date}',{price},'{random.choice(['CC','BC','DC','NC'])}',{event_id},{activated})")
 
-    f.write(f",\n".join(tickets_vals) + ";\n\n")
+        # Accumulate each ticket value
+        tickets_vals.append(f"('{EAN}', '{owner}', '{cat}', '{purchase_date}', {price}, '{random.choice(['CC', 'BC', 'DC', 'NC'])}', {event_id}, {activated})")
+    # Write all ticket values in one INSERT statement
+    f.write(",\n".join(tickets_vals) + ";\n\n")
+
 
 def fake_staff(f):
 	f.write("INSERT INTO `staff` (`id`, `name`, `age`, `role`, `experience_level`) VALUES\n")
@@ -427,7 +431,7 @@ def fake_event_staff(f):
 		used_staff = []
 		max_cap = venue_objects[event_venue_dict[event['id']] - 1]['max_capacity']
 		cnt = 0
-		while cnt <= 0.03*max_cap:
+		while cnt <= math.ceil(0.03*max_cap)+1:
 			staff_id = random.choice(staff_role_ids['support'])
 			while staff_id in used_staff:
 				staff_id = random.choice(staff_role_ids['support'])
@@ -438,7 +442,7 @@ def fake_event_staff(f):
 			event_staff_vals.append(f"({event['id']}, {staff_id}, '{assignment_date}', '{shift_start}', '{shift_end}')")
 			cnt += 1
 		cnt = 0
-		while cnt <= 0.06*max_cap:
+		while cnt <= math.ceil(0.06*max_cap)+1:
 			staff_id = random.choice(staff_role_ids['security'])
 			while staff_id in used_staff:
 				staff_id = random.choice(staff_role_ids['security'])
@@ -513,10 +517,10 @@ with open("festival_fake_data.sql", "w") as f:
 	fake_event_venue(f)
 	fake_performance(f)
 	fake_performance_artistband(f)
+	fake_staff(f)
+	fake_event_staff(f)
 	fake_tickets(f)
 	fake_evaluations(f)
 	fake_rates(f)
-	fake_staff(f)
-	fake_event_staff(f)
 	fake_fest_photo(f)
 	f.write("COMMIT;\n")
