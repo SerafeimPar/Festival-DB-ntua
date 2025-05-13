@@ -1,6 +1,6 @@
 import random
 import faker
-from datetime import timedelta, date, datetime
+from datetime import timedelta, date, datetime, timedelta
 from lorem_text import lorem
 fake = faker.Faker()
 
@@ -156,7 +156,7 @@ def fake_festival(f):
 		location_id = locations.pop()
 		img_val = 'NULL' if img==[] else img.pop()
 		festival_dates.append([start_date, end_date])
-		fest_val.append(f"('{year}', '{start_date}','{end_date}', {location_id}, {img_val})")
+		fest_val.append(f"({year}, '{start_date}','{end_date}', {location_id}, {img_val})")
 	f.write(",\n".join(fest_val) + ";\n\n")
 
 # def fake_fest_photo(f):
@@ -188,7 +188,9 @@ def fake_venue(f):
 	f.write(",\n".join(venue_val) + ";\n\n")
 
 def fake_event(f):
-	f.write("INSERT INTO `event` (`id`, `festival_year`, `name`, `event_date`, `start_time`, `end_time`, `duration`, `poster`) VALUES\n")
+	f.write("INSERT INTO `event` (`id`, `festival_year`, `name`, `event_date`, `start_time`, `end_time`, `poster`) VALUES\n")
+	global event_objects
+	event_objects = []
 	event_val = []
 
 	img = list(range(61,71))
@@ -207,11 +209,148 @@ def fake_event(f):
 		end_time = start_time + timedelta(hours=random.choice([3,6,9,12]))
 		duration = end_time - start_time
 		img_val = 'NULL' if img==[] else img.pop()
-		event_val.append(f"('{j}', '{festival_year}','{name}', '{event_date}', '{start_time}','{end_time}', '{duration}',{img_val})")
+		event_objects.append({'id': j, 'festival_year': festival_year, 'name': name, 'event_date': event_date, 'start_time': start_time, 'end_time': end_time, 'duration': duration, 'img_val': img_val})
+		event_val.append(f"({j}, '{festival_year}','{name}', '{event_date}', '{start_time}','{end_time}', {img_val})")
 	f.write(",\n".join(event_val) + ";\n\n")
+
+
+def fake_event_venue(f):
+	f.write("INSERT INTO `event_venue` (`event_id`, `venue_id`) VALUES\n")
+	global event_venue_dict
+	event_venue_vals = []
+	event_venue_dict = {}
+	for i in range(1, N_EVENTS+1):
+		venue_id = random.randint(1,N_VENUES)
+		event_venue_vals.append(f"({i}, {venue_id})")
+		event_venue_dict.update({i:venue_id})
+	f.write(",\n".join(event_venue_vals) + ";\n\n")
+
+
+
+
+#An tlk alaksoume ta durations na einai different kanto me normalized weights (they all add to 1 and then multiply them with the active duration)
+def fake_performance(f):
+	f.write("INSERT INTO `performance` (`id`, `event_id`, `venue_id`, `performance_type`, `start_time`, `duration`, `sequence_number`, `break_duration`) VALUES\n")
+	global perf_id
+	global performance_object
+	performance_object = []
+	perf_id=1
+	performance_vals = []
+	performance_types = ['headline', 'Special guest', 'other']
+	for event in event_objects:
+		numOfPerformancesPerEvent=random.randint(5,7)
+		duration_breaks = [timedelta(seconds=random.randint(5,30)*60) for _ in range(numOfPerformancesPerEvent)]
+		total_break_duration = sum(duration_breaks, timedelta())
+		active_duration = event['duration'] - total_break_duration
+		performance_duration = active_duration/numOfPerformancesPerEvent
+		currentTime = event['start_time']
+		for i in range(numOfPerformancesPerEvent):
+			performance_object.append({'id': perf_id, 'event_id': event['id'], 'venue_id': event_venue_dict[event['id']], 'performance_type': ('warm up' if i==0 else performance_types[random.randint(0,2)]), 'start_time': currentTime, 'duration': performance_duration, 'sequence_number': i+1, 'break_duration': duration_breaks[i]})
+			performance_vals.append(f"({perf_id}, {event['id']}, {event_venue_dict[event['id']]}, '{'warm up' if i==0 else performance_types[random.randint(0,2)]}', '{currentTime}', '{performance_duration}', '{i+1}', '{duration_breaks[i]}')")
+			perf_id=perf_id+1
+			currentTime = currentTime + performance_duration + duration_breaks[i]
+	f.write(",\n".join(performance_vals) + ";\n\n")
+
+
+def fake_performance_artistband(f):
+    f.write("INSERT INTO `performance_artistband` (`performance_id`, `artist_band_id`) VALUES\n")
+    perf_artist_values = []
+    # Dictionary to track artist performances: {artist_id: [performance_ids]}
+    artist_performances = {}
+    # Dictionary to track years each artist performed: {artist_id: set(years)}
+    artist_years = {}
+    
+    for i in range(1, perf_id):
+        artistband_id = random.randint(1, N_ARTISTBANDS)
+        # Get current performance details
+        current_perf = next(perf for perf in performance_object if perf['id'] == i)
+        current_event = next(event for event in event_objects if event['id'] == current_perf['event_id'])
+        current_date = current_event.get('event_date')
+        current_year = current_date.year if hasattr(current_date, 'year') else int(str(current_date).split('-')[0])
+        current_start = current_perf['start_time']
+        current_end = current_start + current_perf['duration']
+        
+        # Check for conflicts (simultaneous performances and consecutive years)
+        has_conflict = False
+        
+        while True:
+            has_conflict = False
+            
+            # Check for simultaneous performance conflict
+            if artistband_id in artist_performances:
+                for other_perf_id in artist_performances[artistband_id]:
+                    other_perf = next(perf for perf in performance_object if perf['id'] == other_perf_id)
+                    other_event = next(event for event in event_objects if event['id'] == other_perf['event_id'])
+                    
+                    # Skip if not on the same date
+                    if other_event.get('event_date') != current_date:
+                        continue
+                        
+                    other_start = other_perf['start_time']
+                    other_end = other_start + other_perf['duration']
+                    
+                    # Check for time overlap (same logic as in the trigger)
+                    if ((other_start <= current_start and other_end > current_start) or
+                        (other_start < current_end and other_end >= current_end) or
+                        (other_start >= current_start and other_end <= current_end)):
+                        has_conflict = True
+                        break
+            
+            # Check for consecutive years constraint
+            if not has_conflict and artistband_id in artist_years:
+                years = sorted(list(artist_years[artistband_id]))
+                
+                # Add the current year to check if it would create > 3 consecutive years
+                test_years = years + [current_year] if current_year not in years else years
+                test_years = sorted(list(set(test_years)))  # Ensure uniqueness
+                
+                # Check for more than 3 consecutive years
+                consecutive_count = 1
+                max_consecutive = 1
+                
+                for j in range(1, len(test_years)):
+                    if test_years[j] == test_years[j-1] + 1:
+                        consecutive_count += 1
+                        max_consecutive = max(max_consecutive, consecutive_count)
+                    else:
+                        consecutive_count = 1
+                
+                if max_consecutive >= 3:
+                    has_conflict = True
+            
+            # If no conflict, break the loop
+            if not has_conflict:
+                break
+                
+            # Try a different artist
+            artistband_id = random.randint(1, N_ARTISTBANDS)
+        
+        # Add this performance to the artist's tracking
+        if artistband_id not in artist_performances:
+            artist_performances[artistband_id] = []
+        artist_performances[artistband_id].append(i)
+        
+        # Add the year to the artist's years
+        if artistband_id not in artist_years:
+            artist_years[artistband_id] = set()
+        artist_years[artistband_id].add(current_year)
+        
+        perf_artist_values.append(f"({i}, {artistband_id})")
+    
+    f.write(",\n".join(perf_artist_values) + ";\n\n")
+
+
+#def fake_staff(f):
+#	f.write("INSERT INTO `staff` (`id`, `name`, `age`, `role`, `experience_level`) VALUES\n")
+
+
+
 
 with open("festival_fake_data.sql", "w") as f:
 	f.write("BEGIN;\n\n")
+
+	#f.write("DELETE FROM `festival_location`;\nDELETE FROM `performance_artistband`;\nDELETE FROM `location`;\nDELETE FROM `entity_image`;\nDELETE FROM `rates`;\nDELETE FROM `evaluation`;\nDELETE FROM `performance`;\nDELETE FROM `event_venue`;\nDELETE FROM `venue`;\nDELETE FROM `visitor_tickets`;\nDELETE FROM `artist_band_genre`;\nDELETE FROM `genre`;\nDELETE FROM `image`;\nDELETE FROM `resale_transactions`;\nDELETE FROM `buyer_queue`;\nDELETE FROM `seller_queue`;\nDELETE FROM `visitor`;\nDELETE FROM `tickets`;\nDELETE FROM `event_staff`;\nDELETE FROM `event`;\nDELETE FROM `festival`;\nDELETE FROM `staff`;\nDELETE FROM `memberof`;\nDELETE FROM `artistband`;\n\n\n")
+
 	fake_visitors(f)
 	fake_images(f)
 	fake_locations(f)
@@ -223,4 +362,7 @@ with open("festival_fake_data.sql", "w") as f:
 	fake_festival(f)
 	fake_event(f)
 	fake_venue(f)
+	fake_event_venue(f)
+	fake_performance(f)
+	fake_performance_artistband(f)
 	f.write("COMMIT;\n")
