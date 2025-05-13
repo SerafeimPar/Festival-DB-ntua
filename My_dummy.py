@@ -363,7 +363,7 @@ def fake_tickets(f):
             random.shuffle(visitor_ids)
             cnt = 0
 
-        while owner in visitor_events and visitor_events[owner] == event_id:
+        while (owner in visitor_events) and (visitor_events[owner] == event_id):
             event_id = random.randint(1, N_EVENTS)
 
         visitor_events[owner] = event_id
@@ -449,9 +449,7 @@ def fake_fest_photo(f):
 
 
 def activate_tickets(N):
-	f.write(f"""UPDATE tickets 
-            SET isActivated = true 
-            LIMIT {N};\n""")
+	f.write(f"""UPDATE tickets SET isActivated = true LIMIT {N};\n""")
 
 def fake_rates(f):
     activate_tickets(N_EVALUATIONS)
