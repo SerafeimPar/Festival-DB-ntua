@@ -112,10 +112,13 @@ def fake_genres(f):
 def fake_art_genre(f):
 	f.write("INSERT INTO `artist_band_genre` (`artist_band_id`, `genre_id`) VALUES\n")
 	art_genre_values = []
-	art_genre_id = 1
-	for i in range(1, N_ARTISTBANDS+1):
-		genre_id = random.randint(1,19)
-		art_genre_values.append(f"({i}, {genre_id})")
+	for i in range(1, N_ARTISTBANDS + 1):
+		# Choose a random number of genres between 1 and 3
+		num_genres = random.randint(1, 3)
+		# Select unique genre IDs
+		genre_ids = random.sample(range(1, 20), num_genres)  # Ensure unique genres
+		for genre_id in genre_ids:
+			art_genre_values.append(f"({i}, {genre_id})")
 	f.write(",\n".join(art_genre_values) + ";\n\n")
 
 def fake_member_of(f):
@@ -425,34 +428,62 @@ def fake_staff(f):
 	f.write(",\n".join(staff_vals) + ";\n\n")
 
 def fake_event_staff(f):
-	f.write("INSERT INTO `event_staff` (`event_id`, `staff_id`, `assignment_date`, `shift_start`, `shift_end`) VALUES\n")
-	event_staff_vals = []
-	for event in event_objects:
-		used_staff = []
-		max_cap = venue_objects[event_venue_dict[event['id']] - 1]['max_capacity']
-		cnt = 0
-		while cnt <= math.ceil(0.03*max_cap)+1:
-			staff_id = random.choice(staff_role_ids['support'])
-			while staff_id in used_staff:
-				staff_id = random.choice(staff_role_ids['support'])
-			year, month, day = event['event_date'].year, event['event_date'].month, event['event_date'].day
-			assignment_date = fake.date_between_dates(date(year-1,1,1), event['event_date'])
-			shift_start = fake.date_time_between(event['start_time'], event['end_time'])
-			shift_end = fake.date_time_between(shift_start, event['end_time'])
-			event_staff_vals.append(f"({event['id']}, {staff_id}, '{assignment_date}', '{shift_start}', '{shift_end}')")
-			cnt += 1
-		cnt = 0
-		while cnt <= math.ceil(0.06*max_cap)+1:
-			staff_id = random.choice(staff_role_ids['security'])
-			while staff_id in used_staff:
-				staff_id = random.choice(staff_role_ids['security'])
-			year, month, day = event['event_date'].year, event['event_date'].month, event['event_date'].day
-			assignment_date = fake.date_between_dates(date(year-1,1,1), event['event_date'])
-			shift_start = fake.date_time_between(event['start_time'], event['end_time'])
-			shift_end = fake.date_time_between(shift_start, event['end_time'])
-			event_staff_vals.append(f"({event['id']}, {staff_id}, '{assignment_date}', '{shift_start}', '{shift_end}')")
-			cnt += 1
-	f.write(",\n".join(event_staff_vals) + ";\n\n")
+    f.write("INSERT INTO `event_staff` (`event_id`, `staff_id`, `assignment_date`, `shift_start`, `shift_end`) VALUES\n")
+    event_staff_vals = []
+    for event in event_objects:
+        used_staff = []
+        max_cap = venue_objects[event_venue_dict[event['id']] - 1]['max_capacity']
+        cnt = 0
+        
+        # Calculate required staff counts based on trigger requirements
+        required_support = math.ceil(0.03 * max_cap) + 1  # 3% support staff
+        required_security = math.ceil(0.06 * max_cap) + 1  # 6% security staff
+        required_technical = math.ceil(0.02 * max_cap) + 1  # 2% technical staff
+
+        # Assign support staff
+        while cnt < required_support:
+            staff_id = random.choice(staff_role_ids['support'])
+            while staff_id in used_staff:
+                staff_id = random.choice(staff_role_ids['support'])
+            year, month, day = event['event_date'].year, event['event_date'].month, event['event_date'].day
+            assignment_date = fake.date_between_dates(date(year-1, 1, 1), event['event_date'])
+            shift_start = fake.date_time_between(event['start_time'], event['end_time'])
+            shift_end = fake.date_time_between(shift_start, event['end_time'])
+            event_staff_vals.append(f"({event['id']}, {staff_id}, '{assignment_date}', '{shift_start}', '{shift_end}')")
+            used_staff.append(staff_id)  # Mark this staff as used
+            cnt += 1
+
+        cnt = 0  # Reset counter for the next staff type
+
+        # Assign security staff
+        while cnt < required_security:
+            staff_id = random.choice(staff_role_ids['security'])
+            while staff_id in used_staff:
+                staff_id = random.choice(staff_role_ids['security'])
+            year, month, day = event['event_date'].year, event['event_date'].month, event['event_date'].day
+            assignment_date = fake.date_between_dates(date(year-1, 1, 1), event['event_date'])
+            shift_start = fake.date_time_between(event['start_time'], event['end_time'])
+            shift_end = fake.date_time_between(shift_start, event['end_time'])
+            event_staff_vals.append(f"({event['id']}, {staff_id}, '{assignment_date}', '{shift_start}', '{shift_end}')")
+            used_staff.append(staff_id)  # Mark this staff as used
+            cnt += 1
+
+        cnt = 0  # Reset counter for the next staff type
+
+        # Assign technical staff
+        while cnt < required_technical:
+            staff_id = random.choice(staff_role_ids['technical'])
+            while staff_id in used_staff:
+                staff_id = random.choice(staff_role_ids['technical'])
+            year, month, day = event['event_date'].year, event['event_date'].month, event['event_date'].day
+            assignment_date = fake.date_between_dates(date(year-1, 1, 1), event['event_date'])
+            shift_start = fake.date_time_between(event['start_time'], event['end_time'])
+            shift_end = fake.date_time_between(shift_start, event['end_time'])
+            event_staff_vals.append(f"({event['id']}, {staff_id}, '{assignment_date}', '{shift_start}', '{shift_end}')")
+            used_staff.append(staff_id)  # Mark this staff as used
+            cnt += 1
+
+    f.write(",\n".join(event_staff_vals) + ";\n\n")
 
 
 def fake_fest_photo(f):
