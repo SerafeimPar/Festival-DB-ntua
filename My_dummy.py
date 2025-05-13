@@ -385,9 +385,9 @@ def fake_tickets(f):
 
 
         R = random.randint(1, 100)
-        if R < 70:
+        if R < 89:
             cat = "GA"
-        elif R < 98:
+        elif R < 99:
             cat = "BaS"
         else:
             cat = "VIP"
@@ -405,30 +405,51 @@ def fake_tickets(f):
     f.write(f",\n".join(tickets_vals) + ";\n\n")
 
 def fake_staff(f):
-    f.write("INSERT INTO `staff` (`id`, `name`, `age`, `role`, `experience_level`) VALUES\n")
-    staff_vals = []
-    roles = ['technical', 'security', 'support']
-    experiences = ['trainee', 'beginner', 'intermediate', 'experienced', 'expert']
-    for i in range(1,N_STAFF+1):
-        staff_vals.append(f"({i}, '{fake.first_name() + " " + fake.last_name()}', {random.randint(18,45)}, '{random.choice(roles)}', '{random.choice(experiences)}')")
-    f.write(",\n".join(staff_vals) + ";\n\n")
+	f.write("INSERT INTO `staff` (`id`, `name`, `age`, `role`, `experience_level`) VALUES\n")
+	global staff_role_ids
+	staff_role_ids = {'technical':[], 'security':[], 'support':[]}
+	staff_vals = []
+	roles = ['technical', 'security', 'support']
+	experiences = ['trainee', 'beginner', 'intermediate', 'experienced', 'expert']
+	for i in range(1,N_STAFF+1):
+		name = fake.name()
+		age = random.randint(18,45)
+		role = random.choice(roles)
+		exp = random.choice(experiences)
+		staff_role_ids[role].append(i)
+		staff_vals.append(f"({i}, '{name}', {age}, '{role}', '{exp}')")
+	f.write(",\n".join(staff_vals) + ";\n\n")
 
 def fake_event_staff(f):
 	f.write("INSERT INTO `event_staff` (`event_id`, `staff_id`, `assignment_date`, `shift_start`, `shift_end`) VALUES\n")
 	event_staff_vals = []
 	#Add event_staff logic
 	for event in event_objects:
+		used_staff = []
 		#Calculate staff required for the event and then loop the below creation for as many IDs needed
-
-
-		#Creation for specific ID
-		staff_id = random.randint(1,N_STAFF)
-		year, month, day = event['event_date'].year, event['event_date'].month, event['event_date'].day
-		assignment_date = fake.date_between_dates(date(year-1,1,1), event['event_date'])
-		#Need to combine these with time
-		shift_start = fake.date_between(event['start_time'], event['end_time'])
-		shift_end = fake.date_between(shift_start, event['end_time'])
-		event_staff_vals.append(f"({event['id']}, {staff_id}, {assignment_date}, {shift_start}, {shift_end})")
+		max_cap = venue_objects[event_venue_dict[event['id']] - 1]['max_capacity']
+		cnt = 0
+		while cnt <= 0.03*max_cap:
+			staff_id = random.choice(staff_role_ids['support'])
+			while staff_id in used_staff:
+				staff_id = random.choice(staff_role_ids['support'])
+			year, month, day = event['event_date'].year, event['event_date'].month, event['event_date'].day
+			assignment_date = fake.date_between_dates(date(year-1,1,1), event['event_date'])
+			shift_start = fake.date_time_between(event['start_time'], event['end_time'])
+			shift_end = fake.date_time_between(shift_start, event['end_time'])
+			event_staff_vals.append(f"({event['id']}, {staff_id}, '{assignment_date}', '{shift_start}', '{shift_end}')")
+			cnt += 1
+		cnt = 0
+		while cnt <= 0.06*max_cap:
+			staff_id = random.choice(staff_role_ids['security'])
+			while staff_id in used_staff:
+				staff_id = random.choice(staff_role_ids['security'])
+			year, month, day = event['event_date'].year, event['event_date'].month, event['event_date'].day
+			assignment_date = fake.date_between_dates(date(year-1,1,1), event['event_date'])
+			shift_start = fake.date_time_between(event['start_time'], event['end_time'])
+			shift_end = fake.date_time_between(shift_start, event['end_time'])
+			event_staff_vals.append(f"({event['id']}, {staff_id}, '{assignment_date}', '{shift_start}', '{shift_end}')")
+			cnt += 1
 	f.write(",\n".join(event_staff_vals) + ";\n\n")
 
 
