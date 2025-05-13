@@ -453,7 +453,24 @@ def activate_tickets(N):
             SET isActivated = true 
             LIMIT {N} ;""")
 
+def fake_rates(f):
+    activate_tickets(N_EVALUATIONS)
+    f.write("INSERT INTO rates (visitor_id, performance_id, evaluation_id, rating_date) VALUES\n")
+    rate_vals = []
+    cnt = 1
+    for t in tickets_for_evaluation: 
+        owner, event_id = t
+        performance = random.choice([p['id'] for p in performance_object if p['event_id'] == event_id])
+        cnt += 1 
+        
+        event_date = event_dates[event_id]
+        
+        start_date = date(event_date.year + 1, event_date.month, event_date.day) 
+        
+        rate_date = fake.date_between(start_date=start_date, end_date=event_date)
+        rate_vals.append(f"('{owner}', '{event_id}', '{performance}', '{cnt}', '{rate_date}')")
 
+    f.write(f",\n".join(rate_vals) + ";\n\n")
 
 
 with open("festival_fake_data.sql", "w") as f:
@@ -475,9 +492,9 @@ with open("festival_fake_data.sql", "w") as f:
 	fake_event_venue(f)
 	fake_performance(f)
 	fake_performance_artistband(f)
-	#Tickets doesn't follow the triggers. Please fix
-	#fake_tickets(f)
+	fake_tickets(f)
 	fake_evaluations(f)
+	fake_rates(f)
 	fake_staff(f)
 	fake_event_staff(f)
 	fake_fest_photo(f)
