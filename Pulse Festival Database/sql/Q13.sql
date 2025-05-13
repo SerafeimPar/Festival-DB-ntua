@@ -12,9 +12,9 @@ JOIN
 JOIN 
     event e ON p.event_id = e.id
 JOIN 
-    festival_location fl ON e.festival_year = fl.festival_year
+    festival f ON e.festival_year = f.year
 JOIN 
-    location l ON fl.location_id = l.id
+    location l ON f.location_id = l.id
 GROUP BY 
     ab.id, ab.name, ab.type
 HAVING 
