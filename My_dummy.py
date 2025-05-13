@@ -449,7 +449,7 @@ def fake_fest_photo(f):
 
 
 def activate_tickets(N):
-	f.write("""UPDATE ticket 
+	f.write(f"""UPDATE tickets 
             SET isActivated = true 
             LIMIT {N} ;""")
 
