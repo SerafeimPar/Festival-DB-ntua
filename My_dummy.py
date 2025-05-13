@@ -199,7 +199,6 @@ def fake_event(f):
 	random.shuffle(img)
 	i=0
 	for j in range(1,N_EVENTS+1):
-		print(4*(i+1) > j)
 		if (4*(i+1)>j):
 			festival_year = festival_dates[i][0].year
 		else:
