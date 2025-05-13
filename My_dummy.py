@@ -342,7 +342,7 @@ def fake_performance_artistband(f):
 
 
 def fake_tickets(f):
-    f.write("INSERT INTO Tickets (EAN13, visitor_id, category, purchase_date, price, payment_method, event_id) VALUES\n")
+    f.write("INSERT INTO tickets (EAN13, visitor_id, category, purchase_date, price, payment_method, event_id) VALUES\n")
     tickets_vals = []
     visitor_ids = list(range(1, N_VISITORS + 1))
     random.shuffle(visitor_ids)
