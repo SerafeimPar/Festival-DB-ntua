@@ -192,6 +192,8 @@ def fake_event(f):
 	global event_objects
 	event_objects = []
 	event_val = []
+	global event_dates
+	event_dates = {} 
 
 	img = list(range(61,71))
 	random.shuffle(img)
@@ -209,6 +211,7 @@ def fake_event(f):
 		end_time = start_time + timedelta(hours=random.choice([3,6,9,12]))
 		duration = end_time - start_time
 		img_val = 'NULL' if img==[] else img.pop()
+		event_dates[j] = event_date
 		event_objects.append({'id': j, 'festival_year': festival_year, 'name': name, 'event_date': event_date, 'start_time': start_time, 'end_time': end_time, 'duration': duration, 'img_val': img_val})
 		event_val.append(f"({j}, '{festival_year}','{name}', '{event_date}', '{start_time}','{end_time}', {img_val})")
 	f.write(",\n".join(event_val) + ";\n\n")
@@ -338,6 +341,70 @@ def fake_performance_artistband(f):
         perf_artist_values.append(f"({i}, {artistband_id})")
     
     f.write(",\n".join(perf_artist_values) + ";\n\n")
+
+
+
+def fake_tickets(f):
+	f.write("INSERT INTO Tickets (EAN13, visitor_id, category, purchase_date, price, payment_method, event_id) VALUES\n")
+	tickets_vals = []
+	visitor_ids = random.shuffle(list(range(1,N_VISITORS+1)))
+	visitor_events = {}
+	cnt = 0 
+	for i in range(N_TICKETS):
+		EAN =  "".join([str(random.randint(0,9)) for i in range(13)])
+		event_id = random.randint(1,N_EVENTS)
+		
+		owner = visitor_ids[cnt]
+		cnt += 1
+		if(cnt > N_VISITORS):
+			visitor_ids = random.shuffle(visitor_ids)
+			cnt = 0
+
+		#for each visitor only one ticket per event 
+		while (owner in visitor_events.keys() and visitor_events[owner] == event_id):
+			event_id = random.randint(1,N_EVENTS)
+			
+
+		visitor_events[owner] = event_id
+	
+
+		
+
+		year,month,day = event_dates[event_id][0:2], event_dates[event_id][3:5], event_dates[event_id][6:8]
+		purchase_date = fake.date_between(start_date=date(year - 1, month, day), end_date=date(year,month,day)) #you can buy the ticket one year before the event
+
+		R = random.randint(1,10) 
+		if(R < 5):
+			cat = "GA"
+		elif (R < 8):
+			cat = "VIP"
+		else: 
+			cat = "Bas"
+		cat = random.choice(["GA","VIP","BaS"])
+		
+		if cat == "BaS" : 
+			price = 0.0
+		elif cat == "VIP" :
+			price = random.randint(500,2500) + random.random()
+		else: 
+			price = random.randint(50,500) + random.random()
+
+		price = round(price,2)
+		tickets_vals.append(f"('{EAN}','{owner}','{cat}','{purchase_date}',{price},'{random.choice(["CC","BC","DC","NC"])}',{event_id})")
+	f.write(",\n".join(tickets_vals) + ";\n\n")
+
+
+def fake_evaluations(f):
+	eval_vals = []
+	f.write("INSERT INTO evaluation  (artist_performance , sound_lighting, stage_presence, organization, overall_impression) VALUES\n")
+	for i in range(N_EVALUATIONS):
+		artist_performance = random.randint(1,5)
+		sound_lighting = random.randint(1,5)
+		stage_presence = random.randint(1,5)
+		organization = random.randint(1,5)
+		overall_impression = random.randint(1,5)
+		eval_vals.append(f"('{artist_performance}', '{sound_lighting}','{stage_presence}', {organization}, {overall_impression}),\n")
+	f.write(",\n".join(eval_vals) + ";\n\n")
 
 
 #def fake_staff(f):
