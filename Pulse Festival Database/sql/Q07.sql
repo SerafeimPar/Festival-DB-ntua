@@ -1,13 +1,13 @@
 SELECT 
     e.festival_year, 
-    AVG(CASE 
+    SUM(CASE 
         WHEN s.experience_level = 'trainee' THEN 1 
         WHEN s.experience_level = 'beginner' THEN 2 
         WHEN s.experience_level = 'intermediate' THEN 3 
         WHEN s.experience_level = 'experienced' THEN 4 
         WHEN s.experience_level = 'expert' THEN 5 
         ELSE 0 
-    END) AS `avg_experience_value/5`
+    END)/COUNT(s.id) AS `avg_experience_value/5`
 FROM 
     event e 
 JOIN 
