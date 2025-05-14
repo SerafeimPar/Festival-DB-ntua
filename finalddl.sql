@@ -645,29 +645,34 @@ BEGIN
     DECLARE v_ticket_ean CHAR(13);
     
     IF (NEW.status = 'pending') THEN
-
-        SELECT sellQ.sell_id, sellQ.visitor_id, tickets.EAN13 
+        SELECT sellQ.sell_id, sellQ.visitor_id, tickets.EAN13
         INTO v_sell_id, v_seller_id, v_ticket_ean
-        FROM seller_queue AS sellQ 
+        FROM seller_queue AS sellQ
         JOIN tickets ON sellQ.ticket_id = tickets.EAN13
-        WHERE sellQ.status = 'pending' 
-          AND NEW.event_id = tickets.event_id 
+        WHERE sellQ.status = 'pending'
+          AND NEW.event_id = tickets.event_id
           AND (NEW.ticket_type = 'Any' OR NEW.ticket_type = tickets.category)
         ORDER BY sellQ.sell_id
         LIMIT 1;
-
+        
         IF v_sell_id IS NOT NULL THEN
-
+            -- Update ticket ownership
             UPDATE tickets
             SET visitor_id = NEW.visitor_id
             WHERE EAN13 = v_ticket_ean;
             
-
-
-            INSERT INTO resale_transactions(buyer_id, seller_id, event_id, ticket_id , transaction_date) 
-            VALUES (NEW.visitor_id, v_seller_id, NEW.event_id, v_ticket_ean, NOW()); 
-
-            rollback;
+            -- Record the transaction
+            INSERT INTO resale_transactions(buyer_id, seller_id, event_id, ticket_id, transaction_date)
+            VALUES (NEW.visitor_id, v_seller_id, NEW.event_id, v_ticket_ean, NOW());
+            
+            -- Update statuses in both queues
+            UPDATE buyer_queue
+            SET status = 'completed'
+            WHERE visitor_id = NEW.visitor_id AND event_id = NEW.event_id AND status = 'pending';
+            
+            UPDATE seller_queue
+            SET status = 'completed'
+            WHERE sell_id = v_sell_id;
         END IF;
     END IF;
 END//
@@ -711,15 +716,13 @@ END//
 CREATE TRIGGER modify_seller_buyer AFTER INSERT ON resale_transactions
 FOR EACH ROW
 BEGIN
-    
     UPDATE buyer_queue
     SET status = 'completed'
     WHERE (NEW.buyer_id = visitor_id and NEW.event_id = event_id);
-
+    
     UPDATE seller_queue
     SET status = 'completed'
-    WHERE (NEW.seller_id = visitor_id and NEW.ticket_id = ticket_id)
-
+    WHERE (NEW.seller_id = visitor_id and NEW.ticket_id = ticket_id);
 END//
 
 
