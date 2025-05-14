@@ -213,7 +213,7 @@ CREATE TABLE event_staff (
     PRIMARY KEY (event_id, staff_id, assignment_date),
     FOREIGN KEY (event_id) REFERENCES event(id),
     FOREIGN KEY (staff_id) REFERENCES staff(id),
-    CHECK (shift_start < shift_end)
+    CHECK (shift_start <= shift_end)
 );
 
 
