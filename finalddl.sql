@@ -635,65 +635,71 @@ ORDER BY
 
 END//
 
-CREATE TRIGGER auto_buyer_transaction AFTER INSERT ON buyer_queue
-FOR EACH ROW
+DROP PROCEDURE IF EXISTS process_pending_buyers //
+
+CREATE PROCEDURE process_pending_buyers()
 BEGIN
-    DECLARE sell_id INT;
-    DECLARE seller_id INT;
-    DECLARE ticket_ean CHAR(13);
-    
-    IF (NEW.status = 'pending') THEN
-        SELECT sq.sell_id, sq.visitor_id, sq.ticket_id INTO sell_id, seller_id, ticket_ean
-        FROM seller_queue sq 
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE v_buy_id INT;
+    DECLARE v_buyer_id INT;
+    DECLARE v_event_id INT;
+    DECLARE v_ticket_type VARCHAR(3);
+    DECLARE v_sell_id INT;
+    DECLARE v_seller_id INT;
+    DECLARE v_ticket_id CHAR(13);
+
+
+    DECLARE buyer_cursor CURSOR FOR
+        SELECT buy_id, visitor_id, event_id, ticket_type
+        FROM buyer_queue
+        WHERE status = 'pending'
+        ORDER BY buy_id;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    OPEN buyer_cursor;
+
+    read_loop: LOOP
+        FETCH buyer_cursor INTO v_buy_id, v_buyer_id, v_event_id, v_ticket_type;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        
+        SELECT sq.sell_id, sq.visitor_id, sq.ticket_id
+        INTO v_sell_id, v_seller_id, v_ticket_id
+        FROM seller_queue sq
         JOIN tickets t ON sq.ticket_id = t.EAN13
-        WHERE sq.status = 'pending' 
-          AND t.event_id = NEW.event_id 
-          AND (NEW.ticket_type = 'Any' OR NEW.ticket_type = t.category)
-        ORDER BY sq.list_date
+        WHERE sq.status = 'pending'
+          AND t.event_id = v_event_id
+          AND (v_ticket_type = 'Any' OR t.category = v_ticket_type)
+        ORDER BY sq.sell_id
         LIMIT 1;
 
-        IF sell_id IS NOT NULL THEN
-            -- Just insert the transaction, let the transaction trigger handle the rest
-            INSERT INTO resale_transactions (buyer_id, seller_id, event_id, transaction_date) 
-            VALUES (NEW.visitor_id, seller_id, NEW.event_id, NOW());
-            
-            -- Update the ticket ownership
+        
+        IF v_sell_id IS NOT NULL THEN
+           
             UPDATE tickets
-            SET visitor_id = NEW.visitor_id
-            WHERE EAN13 = ticket_ean;
-        END IF;
-    END IF;
-END//
+            SET visitor_id = v_buyer_id
+            WHERE EAN13 = v_ticket_id;
 
-CREATE TRIGGER auto_seller_transaction AFTER INSERT ON seller_queue
-FOR EACH ROW
-BEGIN
-    DECLARE buy_id INT;
-    DECLARE buyer_id INT;
-    DECLARE event_id INT;
-    
-    IF (NEW.status = 'pending') THEN
-        SELECT bq.buy_id, bq.visitor_id, bq.event_id INTO buy_id, buyer_id, event_id
-        FROM buyer_queue bq
-        JOIN tickets t ON t.event_id = bq.event_id
-        WHERE NEW.ticket_id = t.EAN13 
-          AND bq.status = 'pending' 
-          AND (bq.ticket_type = 'Any' OR t.category = bq.ticket_type)
-        ORDER BY bq.buy_id
-        LIMIT 1;
+          
+            UPDATE buyer_queue
+            SET status = 'completed'
+            WHERE buy_id = v_buy_id;
 
-        IF buy_id IS NOT NULL THEN
-            -- Just insert the transaction, let the transaction trigger handle the rest
-            INSERT INTO resale_transactions (buyer_id, seller_id, event_id, transaction_date) 
-            VALUES (buyer_id, NEW.visitor_id, event_id, NOW());
+            UPDATE seller_queue
+            SET status = 'sold'
+            WHERE sell_id = v_sell_id;
+
             
-            -- Update the ticket ownership
-            UPDATE tickets
-            SET visitor_id = buyer_id
-            WHERE EAN13 = NEW.ticket_id;
+            INSERT INTO resale_transactions (buyer_id, seller_id, event_id, transaction_date)
+            VALUES (v_buyer_id, v_seller_id, v_event_id, NOW());
         END IF;
-    END IF;
-END//
+    END LOOP;
+
+    CLOSE buyer_cursor;
+END //
 
 
 DELIMITER ;
