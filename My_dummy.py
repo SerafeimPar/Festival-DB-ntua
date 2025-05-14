@@ -582,7 +582,7 @@ def fake_seller_queue(f):
             end_date=event_date
         )
         
-        status = random.choices(['pending', 'completed', 'cancelled'], weights=[60, 25, 15])[0]
+        status = random.choices(['pending', 'sold', 'cancelled'], weights=[60, 25, 15])[0]
         
         seller_queue_vals.append(f"({i}, {visitor_id}, '{ticket_id}', '{list_date}', '{status}')")
     
