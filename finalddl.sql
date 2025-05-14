@@ -2,8 +2,6 @@ DROP SCHEMA if exists `music_festival`;
 CREATE SCHEMA `music_festival`;
 use music_festival;
 
-
-
 DROP TABLE IF EXISTS visitor;
 CREATE TABLE visitor (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -640,69 +638,61 @@ END//
 CREATE TRIGGER auto_buyer_transaction AFTER INSERT ON buyer_queue
 FOR EACH ROW
 BEGIN
-    DECLARE sell INT;
+    DECLARE sell_id INT;
     DECLARE seller_id INT;
+    DECLARE ticket_ean CHAR(13);
     
     IF (NEW.status = 'pending') THEN
-        SELECT sellQ.sell_id, sellQ.visitor_id INTO sell,seller_id
-        FROM seller_queue as sellQ JOIN tickets on ticket_id = EAN13
-        WHERE sellQ.status = 'pending' AND NEW.event_id = tickets.event_id AND (NEW.ticket_type = 'Any' OR NEW.ticket_type = ticket.category)
-        ORDER BY sellQ.seller_id
+        SELECT sq.sell_id, sq.visitor_id, sq.ticket_id INTO sell_id, seller_id, ticket_ean
+        FROM seller_queue sq 
+        JOIN tickets t ON sq.ticket_id = t.EAN13
+        WHERE sq.status = 'pending' 
+          AND t.event_id = NEW.event_id 
+          AND (NEW.ticket_type = 'Any' OR NEW.ticket_type = t.category)
+        ORDER BY sq.list_date
         LIMIT 1;
 
-        IF sell IS NOT NULL THEN
-            UPDATE seller_queue
-            SET status = 'completed'
-            WHERE sell_id = sell;
+        IF sell_id IS NOT NULL THEN
+            -- Just insert the transaction, let the transaction trigger handle the rest
+            INSERT INTO resale_transactions (buyer_id, seller_id, event_id, transaction_date) 
+            VALUES (NEW.visitor_id, seller_id, NEW.event_id, NOW());
             
-            UPDATE buyer_queue 
-            SET status = 'completed'
-            WHERE buy_id = NEW.buy_id;
-
-            UPDATE ticket
+            -- Update the ticket ownership
+            UPDATE tickets
             SET visitor_id = NEW.visitor_id
-            WHERE EAN13 = EAN;
-
-            INSERT INTO resale_transactions (buyer_id,seller_id,event_id,transaction_date) VALUES (NEW.visitor_id,seller_id,NEW.event_id,NOW()); 
+            WHERE EAN13 = ticket_ean;
         END IF;
     END IF;
-
-
 END//
-
 
 CREATE TRIGGER auto_seller_transaction AFTER INSERT ON seller_queue
 FOR EACH ROW
 BEGIN
-    DECLARE buy INT;
+    DECLARE buy_id INT;
     DECLARE buyer_id INT;
     DECLARE event_id INT;
     
     IF (NEW.status = 'pending') THEN
-        SELECT buyQ.sell_id,buyQ.visitor_id,buyQ.event_id INTO buy,buyer_id,event_id
-        FROM buyer_queue as buyQ, tickets
-        WHERE  NEW.ticket_id = EAN13 AND buyerQ.status = 'pending' AND tickets.event_id = buyerQ.event_id AND (buyerQ.ticket_type = 'Any' OR ticket.category = buyerQ.ticket_type)
-        ORDER BY sellQ.seller_id
+        SELECT bq.buy_id, bq.visitor_id, bq.event_id INTO buy_id, buyer_id, event_id
+        FROM buyer_queue bq
+        JOIN tickets t ON t.event_id = bq.event_id
+        WHERE NEW.ticket_id = t.EAN13 
+          AND bq.status = 'pending' 
+          AND (bq.ticket_type = 'Any' OR t.category = bq.ticket_type)
+        ORDER BY bq.buy_id
         LIMIT 1;
 
-        IF buy IS NOT NULL THEN
-            UPDATE buyer_queue
-            SET status = 'completed'
-            WHERE buy_id = buy;
+        IF buy_id IS NOT NULL THEN
+            -- Just insert the transaction, let the transaction trigger handle the rest
+            INSERT INTO resale_transactions (buyer_id, seller_id, event_id, transaction_date) 
+            VALUES (buyer_id, NEW.visitor_id, event_id, NOW());
             
-            UPDATE seller_queue 
-            SET status = 'completed'
-            WHERE sell = NEW.sell_id;
-
-            UPDATE ticket
+            -- Update the ticket ownership
+            UPDATE tickets
             SET visitor_id = buyer_id
             WHERE EAN13 = NEW.ticket_id;
-
-            INSERT INTO resale_transactions (buyer_id,seller_id,event_id,transaction_date) VALUES (buyer_id,NEW.visitor_id,event_id,NOW()); 
         END IF;
     END IF;
-
-
 END//
 
 
@@ -723,4 +713,3 @@ CREATE INDEX idx_evaluation_overall ON evaluation(overall_impression);
 CREATE INDEX idx_evaluation_artist ON evaluation(artist_performance);
 CREATE INDEX idx_tickets_purchase ON tickets(purchase_date);
 CREATE INDEX idx_tickets_payment ON tickets(payment_method);
-

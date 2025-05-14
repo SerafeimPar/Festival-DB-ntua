@@ -351,6 +351,8 @@ def fake_performance_artistband(f):
 def fake_tickets(f):
     f.write("INSERT INTO tickets (EAN13, visitor_id, category, purchase_date, price, payment_method, event_id, isActivated) VALUES\n")
     tickets_vals = []
+    global tickets_object
+    tickets_object = []
     visitor_ids = list(range(1, N_VISITORS + 1))
     random.shuffle(visitor_ids)
     visitor_events = {}
@@ -406,6 +408,7 @@ def fake_tickets(f):
         price = round(price, 2)
 
         # Accumulate each ticket value
+        tickets_object.append({'EAN': EAN, 'owner': owner, 'cat': cat, 'purchase_date': purchase_date, 'price': price, 'event_id': event_id, 'activated': activated})
         tickets_vals.append(f"('{EAN}', '{owner}', '{cat}', '{purchase_date}', {price}, '{random.choice(['CC', 'BC', 'DC', 'NC'])}', {event_id}, {activated})")
     # Write all ticket values in one INSERT statement
     f.write(",\n".join(tickets_vals) + ";\n\n")
@@ -529,6 +532,62 @@ def fake_rates(f):
     f.write(f",\n".join(rate_vals) + ";\n\n")
 
 
+def fake_buyer_queue(f):
+    f.write("INSERT INTO `buyer_queue` (`buy_id`, `visitor_id`, `event_id`, `ticket_type`, `status`) VALUES\n")
+    buyer_queue_vals = []
+    n_buyers = 100  # Number of buyer queue entries
+    visitor_event_pairs = set()
+    
+    for i in range(1, n_buyers + 1):
+        visitor_id = random.randint(1, N_VISITORS)
+        event_id = random.randint(1, N_EVENTS)
+
+        while (visitor_id, event_id) in visitor_event_pairs:
+            visitor_id = random.randint(1, N_VISITORS)
+            event_id = random.randint(1, N_EVENTS)
+        
+        visitor_event_pairs.add((visitor_id, event_id))
+        ticket_type = random.choices(['GA', 'VIP', 'BaS', 'Any'], weights=[60, 10, 10, 20])[0]
+        status = random.choices(['pending', 'completed', 'cancelled'], weights=[70, 15, 15])[0]
+        buyer_queue_vals.append(f"({i}, {visitor_id}, {event_id}, '{ticket_type}', '{status}')")
+    f.write(",\n".join(buyer_queue_vals) + ";\n\n")
+
+def fake_seller_queue(f):
+    f.write("INSERT INTO `seller_queue` (`sell_id`, `visitor_id`, `ticket_id`, `list_date`, `status`) VALUES\n")
+    seller_queue_vals = []
+    n_sellers = 50  # Number of seller queue entries
+    
+    # Create a list of valid tickets that are not activated
+    valid_tickets = []
+    for ticket in tickets_object:
+        if not ticket['activated']:
+            valid_tickets.append(ticket)
+    
+    # Ensure we don't try to create more sellers than we have valid tickets
+    if len(valid_tickets) < n_sellers:
+        n_sellers = len(valid_tickets)
+    
+    # Randomly select tickets to sell
+    selected_tickets = random.sample(valid_tickets, n_sellers)
+    
+    for i in range(1, n_sellers + 1):
+        ticket = selected_tickets[i-1]
+        visitor_id = ticket['owner']
+        ticket_id = ticket['EAN']
+        
+        # Generate a valid list date (after purchase, before event)
+        event_date = event_dates[ticket['event_id']]
+        list_date = fake.date_time_between(
+            start_date=ticket['purchase_date'],
+            end_date=event_date
+        )
+        
+        status = random.choices(['pending', 'completed', 'cancelled'], weights=[60, 25, 15])[0]
+        
+        seller_queue_vals.append(f"({i}, {visitor_id}, '{ticket_id}', '{list_date}', '{status}')")
+    
+    f.write(",\n".join(seller_queue_vals) + ";\n\n")
+
 with open("festival_fake_data.sql", "w") as f:
 	f.write("BEGIN;\n\n")
 
@@ -554,4 +613,6 @@ with open("festival_fake_data.sql", "w") as f:
 	fake_evaluations(f)
 	fake_rates(f)
 	fake_fest_photo(f)
+	fake_buyer_queue(f)
+	fake_seller_queue(f)
 	f.write("COMMIT;\n")
