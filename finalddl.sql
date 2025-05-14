@@ -268,7 +268,7 @@ CREATE TABLE resale_transactions (
     PRIMARY KEY (complete_id),
     FOREIGN KEY (buyer_id) REFERENCES visitor(id),
     FOREIGN KEY (seller_id) REFERENCES visitor(id),
-    FOREIGN KEY (event_id) REFERENCES event(id),
+    FOREIGN KEY (event_id) REFERENCES event(id)
 );
 
 
@@ -635,93 +635,72 @@ ORDER BY
 
 END//
 
-CREATE TRIGGER auto_buyer_transaction AFTER INSERT ON buyer_queue
-FOR EACH ROW
-BEGIN
-    DECLARE v_sell_id INT;
-    DECLARE v_seller_id INT;
-    DECLARE v_ticket_ean CHAR(13);
-    
-    IF (NEW.status = 'pending') THEN
-        SELECT sellQ.sell_id, sellQ.visitor_id, tickets.EAN13
-        INTO v_sell_id, v_seller_id, v_ticket_ean
-        FROM seller_queue AS sellQ
-        JOIN tickets ON sellQ.ticket_id = tickets.EAN13
-        WHERE sellQ.status = 'pending'
-          AND NEW.event_id = tickets.event_id
-          AND (NEW.ticket_type = 'Any' OR NEW.ticket_type = tickets.category)
-        ORDER BY sellQ.sell_id
-        LIMIT 1;
-        
-        IF v_sell_id IS NOT NULL THEN
-            -- Update ticket ownership
-            UPDATE tickets
-            SET visitor_id = NEW.visitor_id
-            WHERE EAN13 = v_ticket_ean;
-            
-            -- Record the transaction
-            INSERT INTO resale_transactions(buyer_id, seller_id, event_id, ticket_id, transaction_date)
-            VALUES (NEW.visitor_id, v_seller_id, NEW.event_id, v_ticket_ean, NOW());
-            
-            -- Update statuses in both queues
-            UPDATE buyer_queue
-            SET status = 'completed'
-            WHERE visitor_id = NEW.visitor_id AND event_id = NEW.event_id AND status = 'pending';
-            
-            UPDATE seller_queue
-            SET status = 'completed'
-            WHERE sell_id = v_sell_id;
-        END IF;
-    END IF;
-END//
+DROP PROCEDURE IF EXISTS process_pending_buyers //
 
-
-CREATE TRIGGER auto_seller_transaction AFTER INSERT ON seller_queue
-FOR EACH ROW
+CREATE PROCEDURE process_pending_buyers()
 BEGIN
+    DECLARE done INT DEFAULT FALSE;
     DECLARE v_buy_id INT;
     DECLARE v_buyer_id INT;
     DECLARE v_event_id INT;
-    
-    IF (NEW.status = 'pending') THEN
+    DECLARE v_ticket_type VARCHAR(3);
+    DECLARE v_sell_id INT;
+    DECLARE v_seller_id INT;
+    DECLARE v_ticket_id CHAR(13);
 
-        SELECT buyQ.buy_id, buyQ.visitor_id, buyQ.event_id 
-        INTO v_buy_id, v_buyer_id, v_event_id
-        FROM buyer_queue AS buyQ
-        JOIN tickets ON tickets.EAN13 = NEW.ticket_id
-        WHERE buyQ.status = 'pending' 
-          AND tickets.event_id = buyQ.event_id 
-          AND (buyQ.ticket_type = 'Any' OR tickets.category = buyQ.ticket_type)
-        ORDER BY buyQ.buy_id
+
+    DECLARE buyer_cursor CURSOR FOR
+        SELECT buy_id, visitor_id, event_id, ticket_type
+        FROM buyer_queue
+        WHERE status = 'pending'
+        ORDER BY buy_id;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    OPEN buyer_cursor;
+
+    read_loop: LOOP
+        FETCH buyer_cursor INTO v_buy_id, v_buyer_id, v_event_id, v_ticket_type;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        
+        SELECT sq.sell_id, sq.visitor_id, sq.ticket_id
+        INTO v_sell_id, v_seller_id, v_ticket_id
+        FROM seller_queue sq
+        JOIN tickets t ON sq.ticket_id = t.EAN13
+        WHERE sq.status = 'pending'
+          AND t.event_id = v_event_id
+          AND (v_ticket_type = 'Any' OR t.category = v_ticket_type)
+        ORDER BY sq.sell_id
         LIMIT 1;
 
-        IF v_buy_id IS NOT NULL THEN
-   
+        
+        IF v_sell_id IS NOT NULL THEN
+           
             UPDATE tickets
             SET visitor_id = v_buyer_id
-            WHERE EAN13 = NEW.ticket_id;
+            WHERE EAN13 = v_ticket_id;
+
+          
+            UPDATE buyer_queue
+            SET status = 'completed'
+            WHERE buy_id = v_buy_id;
+
+            UPDATE seller_queue
+            SET status = 'sold'
+            WHERE sell_id = v_sell_id;
+
             
-
-
-            INSERT INTO resale_transactions (buyer_id, seller_id, event_id, ticket_id, transaction_date) 
-            VALUES (v_buyer_id, NEW.visitor_id, v_event_id, NEW.ticket_id, NOW()); 
-
+            INSERT INTO resale_transactions (buyer_id, seller_id, event_id, transaction_date)
+            VALUES (v_buyer_id, v_seller_id, v_event_id, NOW());
         END IF;
-    END IF;
-END//
+    END LOOP;
 
+    CLOSE buyer_cursor;
+END //
 
-CREATE TRIGGER modify_seller_buyer AFTER INSERT ON resale_transactions
-FOR EACH ROW
-BEGIN
-    UPDATE buyer_queue
-    SET status = 'completed'
-    WHERE (NEW.buyer_id = visitor_id and NEW.event_id = event_id);
-    
-    UPDATE seller_queue
-    SET status = 'completed'
-    WHERE (NEW.seller_id = visitor_id and NEW.ticket_id = ticket_id);
-END//
 
 
 DELIMITER ;
