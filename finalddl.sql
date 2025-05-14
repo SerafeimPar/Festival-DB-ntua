@@ -265,12 +265,10 @@ CREATE TABLE resale_transactions (
     seller_id INT UNSIGNED NOT NULL,
     transaction_date DATETIME NOT NULL,
     event_id INT UNSIGNED NOT NULL,
-    ticket_id char(13) NOT NULL,
     PRIMARY KEY (complete_id),
     FOREIGN KEY (buyer_id) REFERENCES visitor(id),
     FOREIGN KEY (seller_id) REFERENCES visitor(id),
     FOREIGN KEY (event_id) REFERENCES event(id),
-    FOREIGN KEY (ticket_id) REFERENCES tickets(EAN13)
 );
 
 
