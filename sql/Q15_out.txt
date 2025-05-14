@@ -1,0 +1,9 @@
++------------+------------+-----------+-----------+----------------+--------------------+
+| visitor_id | first_name | last_name | artist_id | artist_name    | total_rating_score |
++------------+------------+-----------+-----------+----------------+--------------------+
+|        195 | William    | Neal      |        49 | Lisa Mason     |                 10 |
+|        438 | Sandra     | Monroe    |        50 | John Thompson  |                 10 |
+|        288 | Dylan      | Joseph    |        48 | Sandra Sampson |                 10 |
+|        457 | Warren     | Vazquez   |        45 | Matthew Hansen |                 10 |
+|        477 | Robert     | Foley     |        20 | Katrina Owens  |                 10 |
++------------+------------+-----------+-----------+----------------+--------------------+

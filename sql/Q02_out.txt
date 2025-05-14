@@ -1,0 +1,13 @@
++----+----------------+--------+------------+--------------------------------------------+
+| id | name           | type   | genre_name | participated_in_festival_in_year_specified |
++----+----------------+--------+------------+--------------------------------------------+
+| 12 | Ashley James   | Artist | Rock       | No                                         |
+| 50 | John Thompson  | Artist | Rock       | No                                         |
+| 36 | Justin Marsh   | Artist | Rock       | No                                         |
+| 49 | Lisa Mason     | Artist | Rock       | No                                         |
+| 29 | Mark Pearson   | Artist | Rock       | No                                         |
+| 34 | Sarah Walker   | Artist | Rock       | No                                         |
+| 15 | Tanya Barrett  | Artist | Rock       | No                                         |
+| 38 | Tanya Sheppard | Artist | Rock       | No                                         |
+| 47 | White-Wood     | Band   | Rock       | No                                         |
++----+----------------+--------+------------+--------------------------------------------+

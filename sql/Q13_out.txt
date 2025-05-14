@@ -1,0 +1,22 @@
++----+---------------------+--------+-----------------+
+| id | name                | type   | continent_count |
++----+---------------------+--------+-----------------+
+| 22 | Hunter Schmidt      | Artist |               4 |
+| 11 | Tonya Hensley       | Artist |               4 |
+|  7 | Adam Henderson      | Artist |               3 |
+| 10 | Annette Acevedo     | Artist |               3 |
+| 12 | Ashley James        | Artist |               3 |
+| 17 | Carolyn Benjamin    | Artist |               3 |
+| 28 | David Dalton        | Artist |               3 |
+| 42 | Debra Jackson       | Artist |               3 |
+|  8 | Gregory Ferguson    | Artist |               3 |
+| 30 | Jeremy Kelly        | Artist |               3 |
+| 50 | John Thompson       | Artist |               3 |
+|  1 | Jonathan Oneill     | Artist |               3 |
+| 49 | Lisa Mason          | Artist |               3 |
+| 16 | Mclean-Rivera       | Band   |               3 |
+| 53 | Mrs. Adriana Harris | Artist |               3 |
+| 37 | Myers-Camacho       | Band   |               3 |
+| 26 | Victoria Gamble     | Artist |               3 |
+| 47 | White-Wood          | Band   |               3 |
++----+---------------------+--------+-----------------+

@@ -1,0 +1,37 @@
++----+---------------------+--------+------+-------------------------+
+| id | name                | type   | age  | festival_participations |
++----+---------------------+--------+------+-------------------------+
+| 22 | Hunter Schmidt      | Artist |    7 |                       4 |
+| 11 | Tonya Hensley       | Artist |   14 |                       4 |
+|  7 | Adam Henderson      | Artist |   23 |                       3 |
+| 10 | Annette Acevedo     | Artist |   26 |                       3 |
+| 14 | Caitlyn House       | Artist |    5 |                       3 |
+| 17 | Carolyn Benjamin    | Artist |    6 |                       3 |
+| 39 | Chloe Phillips      | Artist |   25 |                       3 |
+| 42 | Debra Jackson       | Artist |   14 |                       3 |
+| 57 | Hannah Herring      | Artist |    5 |                       3 |
+| 50 | John Thompson       | Artist |   25 |                       3 |
+|  1 | Jonathan Oneill     | Artist |   21 |                       3 |
+| 20 | Katrina Owens       | Artist |   26 |                       3 |
+| 49 | Lisa Mason          | Artist |    7 |                       3 |
+| 53 | Mrs. Adriana Harris | Artist |    4 |                       3 |
+| 52 | Robert Rios         | Artist |   24 |                       3 |
+| 26 | Victoria Gamble     | Artist |   20 |                       3 |
+| 23 | Anthony Meyer       | Artist |   17 |                       2 |
+| 19 | Brianna Gonzales    | Artist |   26 |                       2 |
+| 35 | Bruce Wells         | Artist |   17 |                       2 |
+| 51 | Christine Espinoza  | Artist |   26 |                       2 |
+| 55 | Drew Moore          | Artist |   26 |                       2 |
+| 40 | Elizabeth Hall      | Artist |   24 |                       2 |
+| 29 | Mark Pearson        | Artist |   24 |                       2 |
+| 56 | Richard Whitehead   | Artist |   16 |                       2 |
+| 48 | Sandra Sampson      | Artist |   17 |                       2 |
+| 27 | Steven Adams        | Artist |   25 |                       2 |
+|  3 | Steven Davis        | Artist |   22 |                       2 |
+| 46 | Tina Farmer         | Artist |   17 |                       2 |
+|  5 | Zachary Austin      | Artist |    5 |                       2 |
+|  9 | Cheyenne Young      | Artist |   21 |                       1 |
+|  2 | Tina Sparks         | Artist |   26 |                       1 |
+|  6 | Tonya Huynh         | Artist |   22 |                       1 |
+| 44 | William Cook        | Artist |   12 |                       1 |
++----+---------------------+--------+------+-------------------------+

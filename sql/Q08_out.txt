@@ -1,0 +1,76 @@
++-----+--------------------+-----+------------------+
+| id  | name               | age | experience_level |
++-----+--------------------+-----+------------------+
+|   2 | Stacy Jackson      |  25 | trainee          |
+|   6 | Christine Coleman  |  20 | expert           |
+|   9 | Melissa Glover     |  18 | expert           |
+|  10 | Melvin Herman      |  25 | beginner         |
+|  11 | Jason Lee          |  35 | trainee          |
+|  13 | Terri Jones        |  40 | trainee          |
+|  17 | Brian Hess         |  32 | trainee          |
+|  20 | Mrs. Ebony Baker   |  43 | intermediate     |
+|  22 | Vanessa Ward       |  21 | experienced      |
+|  23 | Megan Middleton    |  43 | experienced      |
+|  25 | Todd Jordan        |  44 | expert           |
+|  30 | Angel Cook         |  23 | beginner         |
+|  31 | Kayla Jackson      |  36 | experienced      |
+|  33 | Kelsey Orozco      |  24 | expert           |
+|  34 | Denise Gibson      |  35 | beginner         |
+|  36 | David Sullivan     |  27 | beginner         |
+|  41 | Phyllis Hall       |  40 | trainee          |
+|  42 | Brooke Russell     |  21 | expert           |
+|  43 | Taylor Young       |  37 | trainee          |
+|  44 | Dawn Flowers       |  44 | experienced      |
+|  45 | Deborah Coleman    |  37 | experienced      |
+|  49 | Ryan Garcia        |  24 | beginner         |
+|  58 | Brian Walker       |  22 | expert           |
+|  61 | Nicole Mullen      |  36 | beginner         |
+|  62 | Connor Huffman     |  26 | experienced      |
+|  63 | Travis Lopez       |  41 | intermediate     |
+|  65 | Travis Rodriguez   |  30 | trainee          |
+|  67 | Theresa Perry      |  18 | beginner         |
+|  71 | Jennifer Massey    |  41 | trainee          |
+|  72 | Katrina Christian  |  21 | beginner         |
+|  78 | Jesus Foster       |  39 | beginner         |
+|  80 | Matthew Barnes     |  36 | experienced      |
+|  84 | Valerie Blake      |  32 | intermediate     |
+|  88 | Anthony Young DDS  |  19 | experienced      |
+|  89 | Nicholas Sheppard  |  29 | trainee          |
+|  94 | Sylvia Valdez      |  22 | experienced      |
+|  96 | Tommy Barnes       |  45 | intermediate     |
+|  98 | Dean Rice          |  21 | trainee          |
+| 100 | Thomas Strickland  |  23 | experienced      |
+| 101 | Gina Sandoval      |  32 | expert           |
+| 102 | Cody Anderson      |  18 | experienced      |
+| 103 | Bryan Tran         |  38 | expert           |
+| 105 | Calvin Nguyen      |  28 | trainee          |
+| 107 | Valerie Jones      |  25 | experienced      |
+| 112 | Juan Carney        |  33 | intermediate     |
+| 117 | Rebecca Garcia     |  26 | expert           |
+| 120 | Adam Lewis         |  35 | expert           |
+| 131 | Melanie Ortega     |  44 | trainee          |
+| 134 | Ronald Riley       |  43 | experienced      |
+| 135 | Amy Hicks          |  25 | trainee          |
+| 138 | Nicole Ingram      |  38 | experienced      |
+| 143 | Stephen Green      |  26 | beginner         |
+| 146 | Derek Cruz         |  31 | trainee          |
+| 148 | William Johns      |  28 | experienced      |
+| 149 | Crystal Rogers     |  40 | beginner         |
+| 152 | Dustin Chapman     |  41 | trainee          |
+| 153 | Steven Campbell    |  42 | intermediate     |
+| 154 | Samantha Bennett   |  34 | trainee          |
+| 155 | Renee Hart         |  42 | beginner         |
+| 156 | Andrew Marshall    |  40 | intermediate     |
+| 161 | Luke Stephens      |  43 | intermediate     |
+| 165 | Robert Burton      |  30 | trainee          |
+| 170 | Elizabeth Roberts  |  36 | intermediate     |
+| 171 | Pamela Davis       |  20 | expert           |
+| 173 | Mrs. Erica Ramirez |  20 | experienced      |
+| 177 | Trevor Wilson      |  40 | beginner         |
+| 182 | Jeffrey West       |  37 | beginner         |
+| 189 | Corey Smith        |  40 | beginner         |
+| 196 | Lisa Walker        |  39 | beginner         |
+| 197 | Sherri Dean        |  21 | beginner         |
+| 198 | David Acosta       |  38 | experienced      |
+| 199 | Adam Bowers        |  41 | beginner         |
++-----+--------------------+-----+------------------+

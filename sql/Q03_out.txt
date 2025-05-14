@@ -1,0 +1,12 @@
++----+------------------+--------+---------------+---------------+
+| id | name             | type   | festival_year | warm_up_count |
++----+------------------+--------+---------------+---------------+
+| 33 | Johnson-Walker   | Band   |          2020 |             4 |
+| 48 | Sandra Sampson   | Artist |          2016 |             3 |
+| 21 | William Molina   | Artist |          2016 |             3 |
+| 45 | Matthew Hansen   | Artist |          2017 |             3 |
+| 36 | Justin Marsh     | Artist |          2018 |             3 |
+| 17 | Carolyn Benjamin | Artist |          2019 |             3 |
+| 24 | Christian Davis  | Artist |          2020 |             3 |
+| 43 | Taylor Ltd       | Band   |          2021 |             3 |
++----+------------------+--------+---------------+---------------+

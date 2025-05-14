@@ -1,0 +1,15 @@
++------------+------------+-----------+----------------+------------------+-----------------+------------+-------------------+------------------------+
+| visitor_id | first_name | last_name | performance_id | artist_name      | event_name      | event_date | avg_artist_rating | avg_overall_impression |
++------------+------------+-----------+----------------+------------------+-----------------+------------+-------------------+------------------------+
+|         12 | Kimberly   | Joseph    |             98 | Carr-Garcia      | xholland        | 2019-08-22 |              NULL |                   NULL |
+|         12 | Kimberly   | Joseph    |             99 | Caitlyn House    | xholland        | 2019-08-22 |              NULL |                   NULL |
+|         12 | Kimberly   | Joseph    |            100 | White-Wood       | xholland        | 2019-08-22 |              NULL |                   NULL |
+|         12 | Kimberly   | Joseph    |            101 | Myers-Camacho    | xholland        | 2019-08-22 |              NULL |                   NULL |
+|         12 | Kimberly   | Joseph    |            102 | Carolyn Benjamin | xholland        | 2019-08-22 |              NULL |                   NULL |
+|         12 | Kimberly   | Joseph    |            150 | Matthew Hansen   | elizabethjordan | 2021-07-12 |              NULL |                   NULL |
+|         12 | Kimberly   | Joseph    |            151 | Myers-Camacho    | elizabethjordan | 2021-07-12 |              NULL |                   NULL |
+|         12 | Kimberly   | Joseph    |            152 | Bruce Wells      | elizabethjordan | 2021-07-12 |              NULL |                   NULL |
+|         12 | Kimberly   | Joseph    |            153 | Adam Henderson   | elizabethjordan | 2021-07-12 |              NULL |                   NULL |
+|         12 | Kimberly   | Joseph    |            154 | Jeremy Kelly     | elizabethjordan | 2021-07-12 |            2.0000 |                 5.0000 |
+|         12 | Kimberly   | Joseph    |            155 | White-Wood       | elizabethjordan | 2021-07-12 |              NULL |                   NULL |
++------------+------------+-----------+----------------+------------------+-----------------+------------+-------------------+------------------------+
